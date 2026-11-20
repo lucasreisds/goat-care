@@ -1,6 +1,6 @@
 import { Container, Sprite } from 'pixi.js';
 import { createRng } from '../../core/random';
-import { SCENE_W } from '../constants';
+import type { Layout } from '../layout';
 import { createBeamTexture, createDotTexture } from '../textures';
 
 /** Slanted additive sun beams (day only). */
@@ -8,8 +8,8 @@ export class SunRays {
   readonly container = new Container();
   private readonly beams: Sprite[] = [];
 
-  constructor() {
-    const texture = createBeamTexture(26, 230);
+  constructor(layout: Layout) {
+    const texture = createBeamTexture(26, layout.groundY - 6);
     [14, 52, 96].forEach((x, i) => {
       const beam = new Sprite(texture);
       beam.anchor.set(0.5, 0);
@@ -45,7 +45,7 @@ export class DustMotes {
   readonly container = new Container();
   private readonly motes: Mote[] = [];
 
-  constructor() {
+  constructor(private readonly layout: Layout) {
     const rng = createRng(404);
     const dot = createDotTexture();
     for (let i = 0; i < 26; i++) {
@@ -54,8 +54,8 @@ export class DustMotes {
       this.container.addChild(sprite);
       this.motes.push({
         sprite,
-        x: rng() * SCENE_W,
-        y: 10 + rng() * 210,
+        x: rng() * layout.width,
+        y: 10 + rng() * (layout.groundY - 26),
         vx: 2 + rng() * 4,
         vy: 1 + rng() * 3,
         phase: rng() * Math.PI * 2,
@@ -68,8 +68,8 @@ export class DustMotes {
     for (const mote of this.motes) {
       mote.x += (mote.vx + Math.sin(t * 0.7 + mote.phase) * 2) * dt;
       mote.y += (mote.vy + Math.cos(t * 0.5 + mote.phase) * 1.5) * dt;
-      if (mote.x > SCENE_W) mote.x = 0;
-      if (mote.y > 230) mote.y = 10;
+      if (mote.x > this.layout.width) mote.x = 0;
+      if (mote.y > this.layout.groundY - 6) mote.y = 10;
       mote.sprite.position.set(Math.round(mote.x), Math.round(mote.y));
       mote.sprite.alpha = daylight * (0.25 + 0.5 * (0.5 + 0.5 * Math.sin(t * 1.5 + mote.phase)));
     }

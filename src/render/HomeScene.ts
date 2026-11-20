@@ -3,13 +3,13 @@ import { CharacterView } from '../character/CharacterView';
 import { createGoatPlaceholder } from '../character/placeholder/mountain-goat';
 import { lerpColor, smoothstep } from '../core/color';
 import type { HourSource } from '../core/time/clock';
-import { CHARACTER_FEET_Y, CHARACTER_X, SCENE_H, SCENE_W } from './constants';
 import { CompletionBurst } from './fx/CompletionBurst';
+import type { Layout } from './layout';
 import { PointLight } from './light/PointLight';
 import { DustMotes, SunRays } from './light/SunRays';
 import { TimeOfDay } from './light/TimeOfDay';
 import { DayScene } from './scene/DayScene';
-import { FIREPLACE_POS, LANTERN_POS, NightScene } from './scene/NightScene';
+import { NightScene } from './scene/NightScene';
 
 /** Warm color the character leans toward as the day turns to cabin night. */
 const WARM_TINT = 0xffd9ae;
@@ -18,59 +18,71 @@ const WARM_TINT = 0xffd9ae;
  * Layer order (bottom to top):
  *   scene (day, night) > character > foreground > AMBIENT multiply >
  *   emissive (window, flames, rays, dust, point lights) > completion burst
+ *
+ * Built for one Layout; the stage rebuilds it when the screen size changes.
  */
 export class HomeScene {
   private readonly timeOfDay = new TimeOfDay();
-  private readonly day = new DayScene();
-  private readonly night = new NightScene();
+  private readonly day: DayScene;
+  private readonly night: NightScene;
   private readonly character: CharacterView;
   private readonly ambient: Sprite;
-  private readonly sunRays = new SunRays();
-  private readonly dust = new DustMotes();
-  private readonly lantern = new PointLight({
-    ...LANTERN_POS,
-    radius: 78,
-    color: 0xffb347,
-    intensity: 0.5,
-    flicker: 0.16,
-    speed: 7,
-  });
-  private readonly fire = new PointLight({
-    ...FIREPLACE_POS,
-    radius: 56,
-    color: 0xff7a2f,
-    intensity: 0.55,
-    flicker: 0.3,
-    speed: 11,
-  });
+  private readonly sunRays: SunRays;
+  private readonly dust: DustMotes;
+  private readonly lantern: PointLight;
+  private readonly fire: PointLight;
   /** Soft fire spill on the character so the cabin warms the goat, not only the walls. */
-  private readonly spill = new PointLight({
-    x: CHARACTER_X,
-    y: CHARACTER_FEET_Y - 40,
-    radius: 66,
-    color: 0xffc27a,
-    intensity: 0.2,
-    flicker: 0.2,
-    speed: 11,
-  });
+  private readonly spill: PointLight;
   private readonly burst = new CompletionBurst();
   private now = 0;
 
   constructor(
-    root: Container,
+    private readonly root: Container,
     private readonly hours: HourSource,
+    private readonly layout: Layout,
   ) {
+    this.day = new DayScene(layout);
+    this.night = new NightScene(layout);
+    this.sunRays = new SunRays(layout);
+    this.dust = new DustMotes(layout);
+
+    this.lantern = new PointLight({
+      ...this.night.lanternPos,
+      radius: 78,
+      color: 0xffb347,
+      intensity: 0.5,
+      flicker: 0.16,
+      speed: 7,
+    });
+    this.fire = new PointLight({
+      ...this.night.firePos,
+      radius: 56,
+      color: 0xff7a2f,
+      intensity: 0.55,
+      flicker: 0.3,
+      speed: 11,
+    });
+    this.spill = new PointLight({
+      x: layout.centerX,
+      y: layout.feetY - 40,
+      radius: 66,
+      color: 0xffc27a,
+      intensity: 0.2,
+      flicker: 0.2,
+      speed: 11,
+    });
+
     const goat = createGoatPlaceholder();
     this.character = new CharacterView({
       idle: goat.idle,
       blink: goat.blink,
-      x: CHARACTER_X,
-      y: CHARACTER_FEET_Y,
+      x: layout.centerX,
+      y: layout.feetY,
     });
 
     this.ambient = new Sprite(Texture.WHITE);
-    this.ambient.width = SCENE_W;
-    this.ambient.height = SCENE_H;
+    this.ambient.width = layout.width;
+    this.ambient.height = layout.height;
     this.ambient.blendMode = 'multiply';
 
     root.addChild(
@@ -89,11 +101,16 @@ export class HomeScene {
     );
   }
 
+  /** Removes everything this scene added to the root (used when the layout changes). */
+  destroy(): void {
+    for (const child of this.root.removeChildren()) child.destroy({ children: true });
+  }
+
   /** Returns true if the tap landed on the character. */
   handleTap(x: number, y: number): boolean {
     if (!this.character.contains(x, y)) return false;
     this.character.celebrate(this.now);
-    this.burst.trigger(CHARACTER_X, CHARACTER_FEET_Y - 32);
+    this.burst.trigger(this.layout.centerX, this.layout.feetY - 32);
     return true;
   }
 

@@ -15,7 +15,13 @@ async function main(): Promise<void> {
 
   const hours = new HourSource(parseHourParam(location.search));
   const stage = await createStage(host);
-  const scene = new HomeScene(stage.app.stage, hours);
+  let scene = new HomeScene(stage.app.stage, hours, stage.layout);
+
+  // New screen size (rotation, window resize): rebuild the scene for the new layout.
+  stage.onLayoutChange((layout) => {
+    scene.destroy();
+    scene = new HomeScene(stage.app.stage, hours, layout);
+  });
 
   stage.onTap((x, y) => {
     if (scene.handleTap(x, y)) hint.classList.add('hidden');
