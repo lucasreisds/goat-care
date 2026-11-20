@@ -8,6 +8,36 @@
 
 ---
 
+# DECISIONS AND STATUS (DECISÕES E STATUS)
+
+## Status
+
+| Stage | Branch | Version | Status |
+|---|---|---|---|
+| 0 Plan (folders, Firestore, rules, character pack, rendering) | `main` | — | **Done** |
+| 1 Test scene: placeholder goat + day/night ambient light | `stage-1-test-scene` | 0.1.0 | In progress |
+| 2 Character pack, layers, expressions, animations | `stage-2-character` | 0.2.0 | Pending |
+| 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | Pending |
+| 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | Pending |
+| 5 Login, pairing, realtime ranking, caresses | `stage-5-online-ranking` | 0.5.0 | Pending |
+| 6 Notifications and PWA polish (official publish) | `stage-6-notifications-pwa` | 1.0.0 | Pending |
+
+Flow: stage branches start from `develop`, merge back into `develop`, release to `main` with tag `vX.Y.Z` and a `CHANGELOG.md` entry. Firebase Hosting is configured from stage 1 for **preview channels only** (see `docs/firebase-setup.md`); the official live deploy is stage 6.
+
+## Decisions
+
+1. **Goals are visible to the partner.** They live in `couples/{coupleId}/goals/{goalId}` with an `ownerUid` field: any member reads, only the owner writes. (Moved out of `users/{uid}` to keep the rules to a single `get()`.)
+2. **Daily cap is enforced by Firestore rules only** (Spark plan, no Cloud Functions). The cap is per person.
+3. **Altitude is calibrated by time, not by number.** Reference player: 10 points/day at 5 m/point = 50 m/day. Targets: young ≈ 14 days → **700 m**, adult ≈ 60 days → **3000 m**, legendary ≈ 165 days (~5.5 months) → **8250 m**. Meters per point is a fixed constant (5), not derived from the live cap, so changing the couple's cap speeds progress up or down but never rescales existing altitude. Altitude is computed from `awardedPoints` (after cap and bonus). Unlock milestones are defined in days × 50 m: 3, 7, 14, 30, 45, 60, 90, 120, 165 days → 150, 350, 700, 1500, 2250, 3000, 4500, 6000, 8250 m (provisional, in `core/progression/altitude.config.ts`). With the max +30% streak bonus and the 15-point cap, the fastest possible player reaches "young" in ~8 days.
+4. **Offline completions are recalculated at sync.** The queue is processed in `completedAt` order, one batch per completion: read `days/{uid_dayKey}`, set `awardedPoints = min(base + bonus, capRemaining)` (can be 0), write completion + increment `days` + increment weekly score together. A completion is never discarded for hitting the cap. Rules validate the batch with `getAfter()`: new day total = old total + `awardedPoints` and ≤ cap; `basePoints` matches the difficulty; `awardedPoints` ≤ base × 1.3 (rounded up). Completions that sync after the grace window (decision 5) are kept locally as "late": personal coins/energy only, 0 ranking points, 0 altitude.
+5. **Weeks are closed by time, not by anyone.** There is no `closed` field and no one marks it. `weekKey` is the Monday date `yyyy-MM-dd` (so rules can build a timestamp with `timestamp.date()`). The couple stores a fixed `utcOffsetMinutes` (−180 for America/Sao_Paulo). Rules allow writes to `days/*`, `completions/*` and `weeks/{weekKey}/scores/*` only while `request.time < periodEnd + 48h` (grace for offline sync); afterwards those documents are read-only. The weekly winner is derived on read from the final scores. DST zones drift by at most 1 h, absorbed by the grace.
+6. **Invite code:** 6 characters from `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (no I, O, 0, 1), single use, expires in **30 minutes** (constant, adjustable), regenerable. `invites/{code}` allows `get` only, never `list`.
+7. **Verified email is required** (`request.auth.token.email_verified == true`) to write couple data and to create/use invites. Impact: (a) rules tests must build contexts with `{ email_verified: true }` plus a negative test with `false` for every couple write; (b) the app needs an "I verified my email" button that calls `user.reload()` and `getIdToken(true)`, otherwise the cached token stays unverified for up to 1 h; (c) on iOS the verification link opens in Safari, not in the installed PWA, so the user has to come back to the app manually; (d) the Auth emulator needs users flagged as verified for end-to-end tests.
+8. **Evolution is driven by altitude only** (`minAltitude` per stage). Achievement unlocks apply to new characters and items, not to stages.
+9. **No local-to-Firebase data migration.** Stages 1–4 use a throwaway local store; stage 5 starts clean. Only the offline sync queue survives as a mechanism.
+
+---
+
 # Original project prompt (written in Portuguese)
 
 Crie um PWA mobile-first chamado "goat-care" (Vite + TypeScript +
