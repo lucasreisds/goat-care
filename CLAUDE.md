@@ -1,3 +1,15 @@
+# Project conventions (override anything below that conflicts)
+
+- **Language:** everything is in English: code (identifiers, comments, file names), commit messages, branch names, docs, CHANGELOG, PR text.
+- **Only in-game user-facing text is in Brazilian Portuguese** (UI labels, character dialogue, goal/shop/ranking copy). Keep it in dedicated i18n/string files, never mixed into logic.
+- **Branches:** English, kebab-case, e.g. `stage-1-test-scene`, `stage-2-character`, `stage-3-goals`, `stage-4-shop-wardrobe`, `stage-5-online-ranking`, `stage-6-notifications-pwa`.
+- **Changelog:** `CHANGELOG.md` follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); update the `[Unreleased]` section with every user-visible change.
+- **Versioning:** [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`); release tags are `vX.Y.Z`.
+
+---
+
+# Original project prompt (written in Portuguese)
+
 Crie um PWA mobile-first chamado "goat-care" (Vite + TypeScript +
 PixiJS), inspirado no app Finch: um pet de autocuidado em que o jogador
 cumpre METAS PRÓPRIAS para cuidar de uma CABRA DAS MONTANHAS BÍPEDE.
