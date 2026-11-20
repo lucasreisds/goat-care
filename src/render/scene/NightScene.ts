@@ -1,70 +1,68 @@
 import { Container, Sprite, type Texture } from 'pixi.js';
 import { createRng } from '../../core/random';
-import { GROUND_Y, SCENE_H, SCENE_W } from '../constants';
+import { GROUND_BAND, type Layout } from '../layout';
 import { PixelBuffer } from '../pixel';
 import { createDotTexture, createSparkleTexture } from '../textures';
 
-/** Light anchors, exported so the light layer places its point lights on them. */
-export const LANTERN_POS = { x: 138, y: 80 } as const;
-export const FIREPLACE_POS = { x: 31, y: 218 } as const;
-
-const WIN = { x: 22, y: 48, w: 56, h: 78 } as const;
+const WIN_X = 22;
+const WIN_W = 56;
+const WIN_H = 78;
 
 const WOOD_DARK = 0x2c1c26;
 const WOOD_MID = 0x4a3033;
 const WOOD_LIGHT = 0x7a5750;
 
-function paintWall(): Texture {
-  const buf = new PixelBuffer(SCENE_W, GROUND_Y);
+function paintWall(L: Layout): Texture {
+  const buf = new PixelBuffer(L.width, L.groundY);
   const rng = createRng(7);
   const planks = [0x6b4a44, 0x75504a, 0x62443f];
   const pw = 12;
-  for (let i = 0, x = 0; x < SCENE_W; i++, x += pw) {
-    buf.rect(x, 0, pw, GROUND_Y, planks[i % 3]!);
-    buf.rect(x + pw - 1, 0, 1, GROUND_Y, 0x3d2a36);
-    buf.rect(x, 0, 1, GROUND_Y, 0x8a6054, 0.45);
+  for (let i = 0, x = 0; x < L.width; i++, x += pw) {
+    buf.rect(x, 0, pw, L.groundY, planks[i % 3]!);
+    buf.rect(x + pw - 1, 0, 1, L.groundY, 0x3d2a36);
+    buf.rect(x, 0, 1, L.groundY, 0x8a6054, 0.45);
     for (let k = 0; k < 24; k++) {
-      buf.rect(x + 1 + Math.floor(rng() * (pw - 3)), Math.floor(rng() * GROUND_Y), 1, 2 + Math.floor(rng() * 4), 0x57393a);
+      buf.rect(x + 1 + Math.floor(rng() * (pw - 3)), Math.floor(rng() * L.groundY), 1, 2 + Math.floor(rng() * 4), 0x57393a);
     }
   }
   // ceiling beam
-  buf.rect(0, 0, SCENE_W, 10, WOOD_MID);
-  buf.rect(0, 0, SCENE_W, 1, WOOD_LIGHT);
-  buf.rect(0, 10, SCENE_W, 1, WOOD_DARK);
+  buf.rect(0, 0, L.width, 10, WOOD_MID);
+  buf.rect(0, 0, L.width, 1, WOOD_LIGHT);
+  buf.rect(0, 10, L.width, 1, WOOD_DARK);
   // soft shade under the beam, stepped
-  buf.rect(0, 11, SCENE_W, 9, 0x2a1a30, 0.3);
-  buf.rect(0, 20, SCENE_W, 9, 0x2a1a30, 0.2);
-  buf.rect(0, 29, SCENE_W, 10, 0x2a1a30, 0.1);
+  buf.rect(0, 11, L.width, 9, 0x2a1a30, 0.3);
+  buf.rect(0, 20, L.width, 9, 0x2a1a30, 0.2);
+  buf.rect(0, 29, L.width, 10, 0x2a1a30, 0.1);
   // baseboard
-  buf.rect(0, GROUND_Y - 6, SCENE_W, 6, WOOD_MID);
-  buf.rect(0, GROUND_Y - 6, SCENE_W, 1, WOOD_LIGHT);
+  buf.rect(0, L.groundY - 6, L.width, 6, WOOD_MID);
+  buf.rect(0, L.groundY - 6, L.width, 1, WOOD_LIGHT);
   return buf.toTexture();
 }
 
-function paintFloor(): Texture {
-  const h = SCENE_H - GROUND_Y;
-  const buf = new PixelBuffer(SCENE_W, h);
+function paintFloor(L: Layout): Texture {
+  const h = GROUND_BAND;
+  const buf = new PixelBuffer(L.width, h);
   const rowH = 11;
   for (let i = 0; i * rowH < h; i++) {
     const y0 = i * rowH;
-    buf.rect(0, y0, SCENE_W, rowH, i % 2 === 0 ? 0x7a5a48 : 0x6d4f42);
-    buf.rect(0, y0 + rowH - 1, SCENE_W, 1, 0x3d2a36);
-    for (let x = (i * 23) % 60; x < SCENE_W; x += 60) buf.rect(x, y0, 1, rowH, 0x3d2a36);
+    buf.rect(0, y0, L.width, rowH, i % 2 === 0 ? 0x7a5a48 : 0x6d4f42);
+    buf.rect(0, y0 + rowH - 1, L.width, 1, 0x3d2a36);
+    for (let x = (i * 23) % 60; x < L.width; x += 60) buf.rect(x, y0, 1, rowH, 0x3d2a36);
   }
-  buf.rect(0, 0, SCENE_W, 2, 0x2c1c26, 0.5);
+  buf.rect(0, 0, L.width, 2, 0x2c1c26, 0.5);
   return buf.toTexture();
 }
 
 function paintWindowFrame(): Texture {
-  const buf = new PixelBuffer(WIN.w + 8, WIN.h + 8);
+  const buf = new PixelBuffer(WIN_W + 8, WIN_H + 8);
   buf.rect(0, 0, buf.width, buf.height, WOOD_MID);
   buf.rect(0, 0, buf.width, 1, WOOD_LIGHT);
   buf.rect(0, 0, 1, buf.height, 0x6a4640);
   buf.rect(buf.width - 1, 0, 1, buf.height, WOOD_DARK);
   buf.rect(0, buf.height - 1, buf.width, 1, WOOD_DARK);
-  buf.ctx.clearRect(4, 4, WIN.w, WIN.h);
-  buf.rect(3, 3, WIN.w + 2, 1, WOOD_DARK);
-  buf.rect(3, 3, 1, WIN.h + 2, WOOD_DARK);
+  buf.ctx.clearRect(4, 4, WIN_W, WIN_H);
+  buf.rect(3, 3, WIN_W + 2, 1, WOOD_DARK);
+  buf.rect(3, 3, 1, WIN_H + 2, WOOD_DARK);
   return buf.toTexture();
 }
 
@@ -82,20 +80,20 @@ function paintSill(): Texture {
 
 function paintGlass(): Texture {
   const rng = createRng(99);
-  const buf = new PixelBuffer(WIN.w, WIN.h);
+  const buf = new PixelBuffer(WIN_W, WIN_H);
   const bands = [0x0b1030, 0x101a40, 0x16255a, 0x1d316b, 0x25407c];
-  const bh = Math.ceil(WIN.h / bands.length);
+  const bh = Math.ceil(WIN_H / bands.length);
   bands.forEach((color, i) => {
-    buf.rect(0, i * bh, WIN.w, bh, color);
+    buf.rect(0, i * bh, WIN_W, bh, color);
     const next = bands[i + 1];
     if (next === undefined) return;
     for (let y = bh - 2; y < bh; y++) {
-      for (let x = 0; x < WIN.w; x++) if (((x + y) & 1) === 0) buf.px(x, i * bh + y, next);
+      for (let x = 0; x < WIN_W; x++) if (((x + y) & 1) === 0) buf.px(x, i * bh + y, next);
     }
   });
   // faint static stars
   for (let i = 0; i < 16; i++) {
-    buf.px(Math.floor(rng() * WIN.w), Math.floor(rng() * 50), i % 3 === 0 ? 0xaec4ff : 0xdfe8ff, 0.7);
+    buf.px(Math.floor(rng() * WIN_W), Math.floor(rng() * 50), i % 3 === 0 ? 0xaec4ff : 0xdfe8ff, 0.7);
   }
   // moon
   const mx = 38;
@@ -109,8 +107,8 @@ function paintGlass(): Texture {
   buf.ellipse(mx - 2, my - 2, 2, 1.5, 0xe0dbb2);
   buf.ellipse(mx + 2, my + 4, 1.5, 1, 0xe0dbb2);
   // snowy field and pine silhouettes
-  buf.rect(0, 66, WIN.w, 12, 0x2a3b78);
-  buf.rect(0, 66, WIN.w, 1, 0x8aa0d8);
+  buf.rect(0, 66, WIN_W, 12, 0x2a3b78);
+  buf.rect(0, 66, WIN_W, 1, 0x8aa0d8);
   for (const px of [6, 13, 44, 50, 31]) {
     const ph = 9 + (px % 5);
     for (let r = 0; r < ph; r++) {
@@ -118,8 +116,8 @@ function paintGlass(): Texture {
     }
   }
   // mullions (dark so they read against the lit glass)
-  buf.rect(27, 0, 2, WIN.h, 0x2f2030);
-  buf.rect(0, 38, WIN.w, 2, 0x2f2030);
+  buf.rect(27, 0, 2, WIN_H, 0x2f2030);
+  buf.rect(0, 38, WIN_W, 2, 0x2f2030);
   return buf.toTexture();
 }
 
@@ -262,9 +260,22 @@ export class NightScene {
   private readonly flames: Texture[];
   private readonly flameSprite: Sprite;
   private readonly bulb: Sprite;
+  private readonly winY: number;
 
-  constructor() {
+  /** Light anchors: the light layer places its point lights on these. */
+  readonly lanternPos: { x: number; y: number };
+  readonly firePos: { x: number; y: number };
+
+  constructor(layout: Layout) {
+    const L = layout;
     const rng = createRng(5);
+    // the window and lantern keep their proportions on taller walls
+    const winY = Math.round(L.groundY * 0.2);
+    this.winY = winY;
+    this.lanternPos = { x: L.width - 42, y: Math.round(L.groundY * 0.34) };
+    this.firePos = { x: 31, y: L.groundY - 18 };
+    const lantern = this.lanternPos;
+    const fire = this.firePos;
 
     const add = (target: Container, texture: Texture, x: number, y: number): Sprite => {
       const sprite = new Sprite(texture);
@@ -273,34 +284,35 @@ export class NightScene {
       return sprite;
     };
 
-    add(this.back, paintWall(), 0, 0);
-    add(this.back, paintFloor(), 0, GROUND_Y);
-    add(this.back, paintWindowFrame(), WIN.x - 4, WIN.y - 4);
-    add(this.back, paintSill(), WIN.x - 8, WIN.y + WIN.h + 2);
-    add(this.back, paintHearth(), 8, GROUND_Y - 42);
-    add(this.back, paintHay(), 126, 212);
-    add(this.back, paintRug(), 52, 240);
+    add(this.back, paintWall(L), 0, 0);
+    add(this.back, paintFloor(L), 0, L.groundY);
+    add(this.back, paintWindowFrame(), WIN_X - 4, winY - 4);
+    add(this.back, paintSill(), WIN_X - 8, winY + WIN_H + 2);
+    add(this.back, paintHearth(), 8, L.groundY - 42);
+    add(this.back, paintHay(), L.width - 54, L.groundY - 24);
+    add(this.back, paintRug(), L.centerX - 38, L.groundY + 4);
     // lantern rope + body
-    const rope = new PixelBuffer(1, 60);
-    rope.rect(0, 0, 1, 60, 0x2a1c26);
-    add(this.back, rope.toTexture(), LANTERN_POS.x, 10);
-    add(this.back, paintLanternBody(), LANTERN_POS.x - 7, LANTERN_POS.y - 10);
+    const ropeLength = lantern.y - 20;
+    const rope = new PixelBuffer(1, ropeLength);
+    rope.rect(0, 0, 1, ropeLength, 0x2a1c26);
+    add(this.back, rope.toTexture(), lantern.x, 10);
+    add(this.back, paintLanternBody(), lantern.x - 7, lantern.y - 10);
 
     // --- emissive layer ---
-    const moonPatch = add(this.emissive, paintMoonPatch(), 12, GROUND_Y);
+    const moonPatch = add(this.emissive, paintMoonPatch(), 12, L.groundY);
     moonPatch.tint = 0x9fb4ff;
     moonPatch.alpha = 0.1;
     moonPatch.blendMode = 'add';
 
-    add(this.emissive, paintGlass(), WIN.x, WIN.y);
+    add(this.emissive, paintGlass(), WIN_X, winY);
 
     const sparkle = createSparkleTexture();
     for (let i = 0; i < 6; i++) {
       const sprite = add(
         this.emissive,
         sparkle,
-        WIN.x + 4 + Math.floor(rng() * (WIN.w - 8)),
-        WIN.y + 3 + Math.floor(rng() * 46),
+        WIN_X + 4 + Math.floor(rng() * (WIN_W - 8)),
+        winY + 3 + Math.floor(rng() * 46),
       );
       sprite.tint = 0xdfe8ff;
       this.stars.push({ sprite, phase: rng() * Math.PI * 2, speed: 1 + rng() * 2 });
@@ -318,14 +330,14 @@ export class NightScene {
         speed: 8 + rng() * 14,
         sway: 2 + rng() * 3,
         phase: rng() * Math.PI * 2,
-        x: rng() * WIN.w,
+        x: rng() * WIN_W,
         y: rng() * 66,
       });
     }
 
     this.flames = paintFlames();
-    this.flameSprite = add(this.emissive, this.flames[0]!, FIREPLACE_POS.x - 12, FIREPLACE_POS.y - 14);
-    this.bulb = add(this.emissive, paintLanternBulb(), LANTERN_POS.x - 4, LANTERN_POS.y - 4);
+    this.flameSprite = add(this.emissive, this.flames[0]!, fire.x - 12, fire.y - 14);
+    this.bulb = add(this.emissive, paintLanternBulb(), lantern.x - 4, lantern.y - 4);
   }
 
   /** `lanternLevel` / `fireLevel` come from the point lights' flicker. */
@@ -337,12 +349,12 @@ export class NightScene {
       flake.y += flake.speed * dt;
       if (flake.y > 66) {
         flake.y = 0;
-        flake.x = Math.random() * WIN.w;
+        flake.x = Math.random() * WIN_W;
       }
       const x = flake.x + Math.sin(t * 0.8 + flake.phase) * flake.sway;
       flake.sprite.position.set(
-        WIN.x + Math.max(0, Math.min(WIN.w - 2, Math.round(x))),
-        WIN.y + Math.round(flake.y),
+        WIN_X + Math.max(0, Math.min(WIN_W - 2, Math.round(x))),
+        this.winY + Math.round(flake.y),
       );
     }
     this.flameSprite.texture = this.flames[Math.floor(t * 9) % this.flames.length]!;

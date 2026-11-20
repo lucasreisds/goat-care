@@ -9,8 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Project scaffold: Vite + TypeScript (strict) + PixiJS 8, Vitest.
-- Portrait pixel-art stage (180x320) scaled by an integer factor with `image-rendering: pixelated`,
-  capped at 30 fps and paused while the page is hidden.
+- Portrait pixel-art stage scaled by an integer factor with `image-rendering: pixelated`, capped at
+  30 fps and paused while the page is hidden. The internal resolution (about 170-200 x 300-460) is
+  derived from the screen, so tall phones are filled with no empty bars; the scene rebuilds on rotation
+  or resize, and the character stays on a fixed point near the bottom.
 - Day scene (mountain peak): banded sky, faceted parallax ridges, pines, drifting clouds,
   wind-blown grass and flowers.
 - Night scene (mountain cabin): moonlit window with twinkling stars and falling snow, hanging lantern,
