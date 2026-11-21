@@ -7,6 +7,7 @@ import {
 } from '@firebase/rules-unit-testing';
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -426,5 +427,39 @@ describe('caresses', () => {
     await assertFails(updateDoc(doc(alice(), `couples/${C}/caresses/c1`), { seenAt: serverTimestamp() }));
     await assertFails(updateDoc(doc(bob(), `couples/${C}/caresses/c1`), { seenAt: serverTimestamp(), ref: 'other' }));
     await assertSucceeds(updateDoc(doc(bob(), `couples/${C}/caresses/c1`), { seenAt: serverTimestamp() }));
+  });
+});
+
+describe('push devices', () => {
+  const device = (over: Record<string, unknown> = {}): Record<string, unknown> => ({
+    token: 'fcm-token',
+    reminders: true,
+    caresses: true,
+    platform: 'ios',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    ...over,
+  });
+
+  it('belong to their owner, who can register, change and remove them', async () => {
+    await assertSucceeds(setDoc(doc(alice(), 'users/alice/devices/d1'), device()));
+    await assertSucceeds(updateDoc(doc(alice(), 'users/alice/devices/d1'), { reminders: false, updatedAt: serverTimestamp() }));
+    await assertSucceeds(getDoc(doc(alice(), 'users/alice/devices/d1')));
+    await assertSucceeds(deleteDoc(doc(alice(), 'users/alice/devices/d1')));
+  });
+
+  it('are invisible and untouchable for anyone else, including the partner', async () => {
+    await assertSucceeds(setDoc(doc(alice(), 'users/alice/devices/d1'), device()));
+    await assertFails(getDoc(doc(bob(), 'users/alice/devices/d1')));
+    await assertFails(setDoc(doc(bob(), 'users/alice/devices/d2'), device()));
+    await assertFails(deleteDoc(doc(bob(), 'users/alice/devices/d1')));
+  });
+
+  it('reject extra fields, bad types and unverified emails', async () => {
+    await assertFails(setDoc(doc(alice(), 'users/alice/devices/d1'), device({ extra: 1 })));
+    await assertFails(setDoc(doc(alice(), 'users/alice/devices/d1'), device({ token: '' })));
+    await assertFails(setDoc(doc(alice(), 'users/alice/devices/d1'), device({ reminders: 'yes' })));
+    await assertFails(setDoc(doc(alice(), 'users/alice/devices/d1'), device({ platform: 'toaster' })));
+    await assertFails(setDoc(doc(aliceUnverified(), 'users/alice/devices/d1'), device()));
   });
 });

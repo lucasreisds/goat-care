@@ -1,0 +1,37 @@
+name: Send notifications
+
+# Pushes goal reminders and caresses (Spark plan: no Cloud Functions, so GitHub runs the sender).
+# GitHub's schedule is best effort: runs can be a few minutes late. Needs the FIREBASE_SERVICE_ACCOUNT
+# repository secret (see docs/firebase-setup.md, "Notifications").
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Print what would be sent without sending or marking anything'
+        type: boolean
+        default: true
+
+concurrency:
+  group: notify
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsx scripts/notify/send.ts
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && '1' || '0' }}

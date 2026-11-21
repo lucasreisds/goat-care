@@ -20,7 +20,7 @@
 | 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | Implemented, awaiting iPhone test |
 | 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | Implemented, awaiting iPhone test |
 | 5 Login, pairing, realtime ranking, caresses | `stage-5-online-ranking` | 0.5.0 | Implemented, awaiting iPhone test |
-| 6 Notifications and PWA polish (official publish) | `stage-6-notifications-pwa` | 1.0.0 | Pending |
+| 6 Notifications and PWA polish (official publish) | `stage-6-notifications-pwa` | 1.0.0 | Implemented, awaiting iPhone test; official publish and `v1.0.0` only after approval |
 
 Flow: stage branches start from `develop`, merge back into `develop`, release to `main` with tag `vX.Y.Z` and a `CHANGELOG.md` entry. Firebase Hosting is configured from stage 1 for **preview channels only** (see `docs/firebase-setup.md`); the official live deploy is stage 6.
 
@@ -47,6 +47,8 @@ Flow: stage branches start from `develop`, merge back into `develop`, release to
 16. **Gifts:** a gift is a `caresses` document of kind `gift` whose `ref` is an item id. The sender pays the item's coin price (`giftsSent`, subtracted from the balance like a purchase); the receiver gets the item in the inventory with `paid: 0`. Coins stay client-side and are not validated by rules (they are personal, not competitive).
 17. **State source in stage 5:** the app composes `GameState` from Firestore listeners (persistent local cache) instead of `localStorage`. Only the completion sync queue is kept in `localStorage` (`goat-care/queue/{uid}`), because completions must be recalculated in a transaction at sync time (decision 4). The weekly ranking is derived live from the week's completions; `weeks/*/scores` is read for the history.
 18. **Local testing:** `npm run emulators` (Auth + Firestore, needs Java 21) with `npm run dev:emulators` (mode `emulator`, project `demo-goat-care`, reads `.env.emulator`), and `npm run test:rules` for the security rules. Rules are deployed with `firebase deploy --only firestore:rules`.
+
+13. **Notifications (stage 6):** push is Web Push via FCM, sent by a scheduled GitHub Actions job (`scripts/notify/send.ts`, every 5 min) because the Spark plan has no Cloud Functions; the job uses the Admin SDK with a service-account secret. Devices register in `users/{uid}/devices/{id}`. Goal reminders are sent once per goal per day (marker in `couples/{id}/reminders`), dropped if more than 3 h late; caresses are marked `pushedAt`. iOS only supports push for the installed Home Screen app (16.4+), needs a tap for permission and has no local scheduling. The official publish (`npm run deploy:live`) and the `v1.0.0` tag wait for the user's go-ahead.
 
 ---
 

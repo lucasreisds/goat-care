@@ -10,7 +10,9 @@ import { strings } from './i18n';
 import { signOut } from './online/account';
 import { isConfigured, startFirebase } from './online/firebase';
 import type { MemberDoc } from './online/model';
+import { PushController } from './online/push';
 import { Session } from './online/session';
+import { registerServiceWorker } from './pwa';
 import { HomeScene, type CharacterAssets } from './render/HomeScene';
 import { characterPortrait } from './render/portrait';
 import { createStage } from './render/Stage';
@@ -21,6 +23,9 @@ import { runGate } from './ui/screens/auth';
 async function main(): Promise<void> {
   const host = document.getElementById('app');
   if (!host) throw new Error('Missing #app element');
+
+  // Offline app shell. In dev it is left alone (the worker also steps aside on localhost).
+  if (import.meta.env.PROD) void registerServiceWorker();
 
   const hours = new HourSource(parseHourParam(location.search));
   const stage = await createStage(host);
@@ -86,6 +91,7 @@ async function main(): Promise<void> {
         location.reload();
       },
     },
+    push: new PushController(firebase.db, gate.user.uid, registerServiceWorker),
     portrait: (stageId, outfit) => characterPortrait(stage.app.renderer, assets, stageId, outfit),
   });
 

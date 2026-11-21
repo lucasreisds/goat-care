@@ -23,6 +23,7 @@ export function openMenu(ctx: AppContext): void {
     h('button', { class: 'btn menu-item', onClick: go(() => ctx.open.wardrobe()) }, `👕 ${strings.ui.menu.wardrobe}`),
     h('button', { class: 'btn menu-item', onClick: go(() => ctx.open.summary()) }, strings.ui.menu.summary),
     h('button', { class: 'btn menu-item', onClick: go(() => ctx.open.weeklyReview(previousWeek(ctx))) }, strings.ui.menu.review),
+    h('button', { class: 'btn menu-item', onClick: go(() => ctx.open.notifications()) }, `🔔 ${strings.ui.menu.notifications}`),
     h('button', { class: 'btn menu-item', onClick: go(() => ctx.open.settings()) }, strings.ui.menu.settings),
   );
 }
