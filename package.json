@@ -1,0 +1,23 @@
+{
+  "name": "goat-care",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "icons": "node scripts/generate-icons.mjs",
+    "deploy:preview": "npm run build && npx --yes firebase-tools@15.37.0 hosting:channel:deploy preview --expires 30d"
+  },
+  "dependencies": {
+    "pixi.js": "^8.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
+  }
+}
