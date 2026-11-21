@@ -59,8 +59,8 @@ body {
   left: 8px;
   right: 8px;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 6px;
   padding: 6px 10px;
   border-radius: 10px;
   background: rgba(10, 14, 30, 0.72);
@@ -77,4 +77,16 @@ body {
   min-width: 42px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.debug-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.debug select {
+  font-size: 12px;
+  max-width: 96px;
 }
