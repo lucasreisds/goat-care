@@ -1,8 +1,9 @@
 import './style.css';
+import { loadItems, loadPack } from './character/pack/loader';
 import { HourSource, parseHourParam } from './core/time/clock';
 import { mountDebugPanel } from './debug/DebugPanel';
 import { strings } from './i18n';
-import { HomeScene } from './render/HomeScene';
+import { HomeScene, type CharacterAssets } from './render/HomeScene';
 import { createStage } from './render/Stage';
 
 async function main(): Promise<void> {
@@ -15,12 +16,15 @@ async function main(): Promise<void> {
 
   const hours = new HourSource(parseHourParam(location.search));
   const stage = await createStage(host);
-  let scene = new HomeScene(stage.app.stage, hours, stage.layout);
+  const [pack, items] = await Promise.all([loadPack('mountain-goat'), loadItems()]);
+  const assets: CharacterAssets = { pack, items };
+  let scene = new HomeScene(stage.app.stage, hours, stage.layout, assets);
 
   // New screen size (rotation, window resize): rebuild the scene for the new layout.
   stage.onLayoutChange((layout) => {
+    const snapshot = scene.character.snapshot();
     scene.destroy();
-    scene = new HomeScene(stage.app.stage, hours, layout);
+    scene = new HomeScene(stage.app.stage, hours, layout, assets, snapshot);
   });
 
   stage.onTap((x, y) => {
@@ -34,7 +38,7 @@ async function main(): Promise<void> {
     scene.update(dt, t);
   });
 
-  mountDebugPanel(hours);
+  mountDebugPanel({ hours, assets, character: () => scene.character });
 }
 
 main().catch((error: unknown) => {
