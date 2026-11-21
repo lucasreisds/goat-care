@@ -56,4 +56,6 @@ export interface Completion {
   /** Meters climbed. */
   altitude: number;
   completedAt: string;
+  /** Synced after the grace window: personal coins and energy only (0 points, 0 altitude). */
+  late?: boolean;
 }

@@ -28,6 +28,9 @@ button {
 button:disabled {
   cursor: default;
 }
+.btn:disabled {
+  opacity: 0.5;
+}
 
 .hud {
   position: absolute;
@@ -572,4 +575,136 @@ button:disabled {
 }
 .debug {
   z-index: 40;
+}
+
+/* ------------------------------------------------------------ online (stage 5) */
+.btn.link {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  text-decoration: underline;
+  min-height: 36px;
+}
+.duo {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.duo-score {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--panel-line);
+  border-radius: 999px;
+  background: rgba(20, 28, 58, 0.72);
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.code-input,
+.invite-code {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+.invite-code {
+  padding: 14px 8px;
+  border-radius: 14px;
+  border: 2px dashed var(--accent);
+  color: var(--accent);
+  font-size: 30px;
+  font-weight: 700;
+  text-align: center;
+  user-select: all;
+  -webkit-user-select: all;
+}
+.partner-line {
+  font-weight: 700;
+}
+.caress-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.btn.caress {
+  min-height: 56px;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 14px;
+}
+.task.readonly .check-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  font-size: 16px;
+  border-color: var(--panel-line);
+}
+.task.readonly.done .check-btn {
+  border-color: var(--ok);
+}
+
+/* The weekly climb: both characters on the same mountain, higher = more meters this week. */
+.climb {
+  position: relative;
+  height: 380px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: linear-gradient(to bottom, #3f6fc4 0%, #8cc0ec 55%, #e2efe6 100%);
+}
+.climb-mountain {
+  position: absolute;
+  inset: 34px 0 0;
+  background: linear-gradient(to bottom, #f2f8ff 0 16%, #8aa4d4 16% 46%, #5f86a8 46% 78%, #4f9a6a 78%);
+  clip-path: polygon(50% 0, 62% 14%, 70% 12%, 100% 70%, 100% 100%, 0 100%, 0 76%, 28% 16%, 38% 18%);
+}
+.climb-summit {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #14204a;
+}
+.climber {
+  position: absolute;
+  /* 0 = foot of the mountain, 1 = summit; the last 190px are the character and its label */
+  bottom: calc((100% - 190px) * var(--climb, 0));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: bottom 0.8s ease-out;
+}
+.climber-tag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(20, 28, 58, 0.85);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.climber.me .climber-tag {
+  outline: 2px solid var(--accent);
+}
+.climber-tag small {
+  color: var(--muted);
+}
+.portrait {
+  width: 144px;
+  height: auto;
+  image-rendering: pixelated;
+}
+.climb-status {
+  text-align: center;
+  font-weight: 700;
 }

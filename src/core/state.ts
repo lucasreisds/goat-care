@@ -46,6 +46,8 @@ export interface GameState {
   inventory: Record<string, { at: string; paid: number }>;
   /** What each character wears: wardrobe[characterId][slot] = itemId. */
   wardrobe: Record<string, Record<string, string>>;
+  /** Items bought as gifts for the partner, by caress id (they cost coins like any purchase). */
+  giftsSent: Record<string, { itemId: string; at: string; paid: number }>;
 }
 
 export const DEFAULT_CHARACTER_ID = 'mountain-goat';
@@ -61,6 +63,7 @@ export function initialState(): GameState {
     weeklyReviews: {},
     inventory: {},
     wardrobe: {},
+    giftsSent: {},
   };
 }
 
@@ -77,7 +80,7 @@ export function totalsOf(state: GameState): Totals {
     (t, c) => ({ coins: t.coins + c.coins, energy: t.energy + c.energy, altitude: t.altitude + c.altitude }),
     { coins: 0, energy: 0, altitude: 0 },
   );
-  const spent = Object.values(state.inventory).reduce((sum, entry) => sum + entry.paid, 0);
+  const spent = [...Object.values(state.inventory), ...Object.values(state.giftsSent)].reduce((sum, entry) => sum + entry.paid, 0);
   return { ...earned, coins: earned.coins - spent };
 }
 

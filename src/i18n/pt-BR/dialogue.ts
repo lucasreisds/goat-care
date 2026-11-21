@@ -43,3 +43,15 @@ export const greetings = {
   welcomeBack: (owner: string): string => `Que bom te ver de novo, ${owner}!`,
   firstMeeting: (owner: string): string => `Oi, ${owner}! Eu vou subir essa montanha com você.`,
 } as const;
+
+/** "Carinhos": the predefined messages partners can send each other (no free text). Keyed by a stable id. */
+export const caressMessages: Readonly<Record<string, string>> = {
+  proud: 'Estou com orgulho de você!',
+  cheer: 'Bora cumprir as metas de hoje?',
+  congrats: 'Parabéns pela meta de hoje! 🎉',
+  hug: 'Um abraço bem apertado 🤗',
+  miss: 'Saudade de você 💛',
+  rest: 'Descansa um pouco, você merece.',
+  water: 'Já bebeu água hoje? 💧',
+  love: 'Te amo! ❤️',
+};

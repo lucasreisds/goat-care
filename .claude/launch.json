@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "goat-care-dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "--port", "5173", "--strictPort"], "port": 5173 }
+    { "name": "goat-care-dev", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "--port", "5173", "--strictPort"], "port": 5173 },
+    { "name": "goat-care-emulator", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev:emulators", "--", "--port", "5174", "--strictPort"], "port": 5174 }
   ]
 }

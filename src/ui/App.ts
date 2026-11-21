@@ -12,16 +12,19 @@ import { nextMilestone, progressToNextMilestone } from '../core/progression/rewa
 import { characterNameOf, totalsOf, type GameState } from '../core/state';
 import { outfitFor } from '../core/wardrobe';
 import { dayKeyOf } from '../core/time/calendar';
-import { loadState, saveState, type KeyValueStore } from '../data/localStore';
-import { strings } from '../i18n';
+import type { Caress } from '../online/model';
+import type { Session } from '../online/session';
+import { lookup, strings } from '../i18n';
 import type { CharacterAssets, HomeScene } from '../render/HomeScene';
 import { COMMIT_EVENT, type AppContext } from './context';
 import { h, isModalOpen, toast } from './dom';
+import { openCaresses } from './screens/caresses';
+import { openCouple } from './screens/couple';
 import { describeRecurrence } from './format';
 import { openGoalEditor } from './screens/goalEditor';
 import { openGoalsList } from './screens/goalsList';
 import { openMood } from './screens/mood';
-import { openOnboarding } from './screens/onboarding';
+import { openRanking } from './screens/ranking';
 import { openMenu, openSettings } from './screens/settings';
 import { openShop } from './screens/shop';
 import { openSummary, openWeeklyReview } from './screens/summary';
@@ -30,9 +33,11 @@ import { openWardrobe } from './screens/wardrobe';
 const ui = strings.ui;
 const SPEECH_MS = 5200;
 
-
 export interface AppDeps {
-  store: KeyValueStore;
+  /** Where the game state lives: Firestore listeners plus the offline sync queue. */
+  session: Session;
+  account: { email: string; signOut(): Promise<void> };
+  portrait: (stageId: string, outfit: readonly string[]) => HTMLCanvasElement;
   assets: CharacterAssets;
   /** The CURRENT scene (it is rebuilt when the screen size changes). */
   scene: () => HomeScene;
@@ -46,6 +51,7 @@ export class App implements AppContext {
   private lastDay = '';
   private readonly promptedReviews = new Set<string>();
   private speechTimer = 0;
+  private partnerKnown: boolean;
 
   private readonly hud = h('header', { class: 'hud' });
   private readonly sheet = h('section', { class: 'sheet' });
@@ -55,16 +61,23 @@ export class App implements AppContext {
     root: HTMLElement,
     private readonly deps: AppDeps,
   ) {
-    const loaded = loadState(deps.store);
-    this.current = settle(loaded.state, this.now());
+    this.current = deps.session.state;
+    this.partnerKnown = deps.session.partner !== null;
     root.append(this.hud, this.bubble, this.sheet);
 
     this.render();
     this.syncCharacter();
-    if (loaded.recovered) toast(ui.toast.recovered, 6000);
+    this.tick();
 
-    if (!this.current.profile.onboarded) openOnboarding(this);
-    else this.tick();
+    // Anything arriving from Firestore (the partner, another device, a finished sync) redraws the app.
+    deps.session.onChange(() => {
+      this.current = deps.session.state;
+      this.render();
+      this.syncCharacter();
+      this.greetPartner();
+      window.dispatchEvent(new Event(COMMIT_EVENT));
+    });
+    deps.session.onCaress((caress) => this.receive(caress));
 
     window.setInterval(() => this.tick(), 30_000);
     document.addEventListener('visibilitychange', () => !document.hidden && this.tick());
@@ -83,9 +96,19 @@ export class App implements AppContext {
 
   toast = (text: string): void => toast(text);
 
+  get session(): Session {
+    return this.deps.session;
+  }
+
+  get account(): AppDeps['account'] {
+    return this.deps.account;
+  }
+
+  portrait = (stageId: string, outfit: readonly string[]): HTMLCanvasElement => this.deps.portrait(stageId, outfit);
+
   commit(next: GameState): void {
-    this.current = next;
-    saveState(this.deps.store, next);
+    this.deps.session.apply(next);
+    this.current = this.deps.session.state;
     this.render();
     this.syncCharacter();
     window.dispatchEvent(new Event(COMMIT_EVENT));
@@ -117,6 +140,9 @@ export class App implements AppContext {
     mood: (): void => openMood(this),
     settings: (): void => openSettings(this),
     menu: (): void => openMenu(this),
+    ranking: (): void => openRanking(this),
+    caresses: (): void => openCaresses(this),
+    couple: (): void => openCouple(this),
   };
 
   // ------------------------------------------------------------------ logic
@@ -147,6 +173,7 @@ export class App implements AppContext {
 
   /** Runs periodically and when the app comes back: day rollover, pending changes, weekly review. */
   private tick(): void {
+    this.deps.session.refresh();
     const settled = settle(this.current, this.now());
     if (settled !== this.current) this.commit(settled);
 
@@ -163,6 +190,31 @@ export class App implements AppContext {
         openWeeklyReview(this, week);
       }
     }
+  }
+
+  /** A caress from the partner: the character passes it on, and it is marked as seen. */
+  private receive(caress: Caress): void {
+    const name = this.session.partner?.displayName ?? ui.ranking.partnerFallback;
+    if (caress.kind === 'message') {
+      const text = strings.caressMessages[caress.ref];
+      if (text) {
+        this.speak(ui.caresses.received(name, text), 'love');
+        this.scene().celebrate();
+      }
+    } else {
+      const item = this.deps.assets.items.find((i) => i.def.id === caress.ref)?.def;
+      toast(ui.caresses.giftReceived(name, item ? (lookup(item.nameKey) ?? item.id) : caress.ref), 6000);
+      this.scene().celebrate();
+    }
+    this.session.markSeen(caress.id);
+  }
+
+  /** Tells the person who created the couple that the partner has arrived. */
+  private greetPartner(): void {
+    const partner = this.session.partner;
+    if (this.partnerKnown || !partner) return;
+    this.partnerKnown = true;
+    toast(ui.couple.joined(partner.displayName), 6000);
   }
 
   private complete(goalId: string): void {
@@ -215,6 +267,21 @@ export class App implements AppContext {
         h('span', { class: 'bar' }, h('i', { style: `width:${Math.round(progressToNextMilestone(totals.altitude) * 100)}%` })),
         h('small', {}, next === null ? ui.hud.topReached : ui.hud.nextMilestone(next)),
       ),
+      this.renderDuo(),
+    );
+  }
+
+  /** This week's score against the partner, one tap away from the ranking and the caresses. */
+  private renderDuo(): HTMLElement {
+    const [me, partner] = this.session.ranking();
+    const mine = me?.points ?? 0;
+    const label = partner ? ui.ranking.chip(mine, partner.points, partner.card?.displayName ?? ui.ranking.partnerFallback) : ui.ranking.chipAlone(mine);
+    const pending = this.session.pendingSync;
+    return h(
+      'div',
+      { class: 'duo' },
+      h('button', { class: 'duo-score', 'aria-label': ui.ranking.open, onClick: () => this.open.ranking() }, `🏆 ${label}${pending > 0 ? ' ⏳' : ''}`),
+      h('button', { class: 'icon-btn round', 'aria-label': ui.caresses.open, onClick: () => this.open.caresses() }, '💌'),
     );
   }
 

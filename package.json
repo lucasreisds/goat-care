@@ -5,18 +5,23 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "dev:emulators": "vite --host --mode emulator",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:rules": "npx --yes firebase-tools@15.37.0 emulators:exec --only firestore --project demo-goat-care \"vitest run --config vitest.rules.config.ts\"",
+    "emulators": "npx --yes firebase-tools@15.37.0 emulators:start --only auth,firestore --project demo-goat-care",
     "icons": "node scripts/generate-icons.mjs",
     "deploy:preview": "npm run build && npx --yes firebase-tools@15.37.0 hosting:channel:deploy preview --expires 30d",
     "generate:goat": "node scripts/generate-goat-pack.mjs"
   },
   "dependencies": {
+    "firebase": "^13.4.0",
     "pixi.js": "^8.23.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
     "@types/node": "^24.19.2",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",

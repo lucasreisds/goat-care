@@ -54,7 +54,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dev panel controls for stage, expression, animation and items.
 - Unit tests for manifest validation, item compatibility, stage by altitude, animation player and springs.
 
+- Accounts with email and password: sign up, sign in, password recovery by email and email verification
+  (with an "I verified my email" button, since on iOS the link opens in Safari and not in the installed app).
+- Pairing: start a couple and invite the partner with a single-use 6-character code that expires in
+  30 minutes, or join with a code. The game is playable before the partner arrives.
+- Weekly ranking in real time: both characters climb the same mountain side by side with the altitude
+  earned in the week, the score is always visible on the home screen, and previous weeks are listed with
+  the winner. The partner's goals for today are visible (read-only).
+- "Carinhos": predefined quick messages and item gifts between partners, delivered in real time (no free
+  chat). The character passes the message on; a gift lands in the wardrobe.
+- The daily point cap is now a setting of the pair: one proposes, the other accepts, and it applies from
+  the next day.
+- Goals can be completed offline; they sync in order when the connection returns, with points
+  recalculated against the daily cap. Completions that sync more than 48 hours after their day ends keep
+  their coins and energy but give no ranking points or altitude.
+- Firestore security rules (only the two members read the pair's data, each one writes only their own
+  goals and completions, daily cap enforced by the rules) with an emulator test suite (`npm run test:rules`).
+- `npm run emulators` and `npm run dev:emulators` to run everything locally without touching the real project.
+
 ### Changed
+- Progress now lives in the account instead of the device: data saved locally by earlier test builds is
+  not carried over, and the game asks you to sign in.
+- The time zone is chosen when the couple is created and is shared by both; "erase this device's data"
+  in the settings became "sign out".
 - The scene is zoomed in: the internal resolution dropped from about 180-200 px wide to 128-160 px, so the
   character fills roughly half the screen width instead of a third, and stands closer to the goals sheet.
 - The night cabin was recomposed around the character: the room has a fixed height (about 2.5 characters)
