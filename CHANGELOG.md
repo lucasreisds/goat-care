@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   file names replaces them with no code change.
 - Dev panel controls for stage, expression, animation and items.
 - Unit tests for manifest validation, item compatibility, stage by altitude, animation player and springs.
+
+## [0.1.0] - 2026-11-20
+
+### Added
 - Project scaffold: Vite + TypeScript (strict) + PixiJS 8, Vitest.
 - Portrait pixel-art stage scaled by an integer factor with `image-rendering: pixelated`, capped at
   30 fps and paused while the page is hidden. The internal resolution (about 170-200 x 300-460) is
@@ -45,3 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Decisions and stage status recorded in `CLAUDE.md`; project conventions (English-only code,
   Keep a Changelog, SemVer).
 - Changelog following Keep a Changelog.
+
+[Unreleased]: https://github.com/lucasreisds/goat-care/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/lucasreisds/goat-care/releases/tag/v0.1.0

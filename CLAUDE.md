@@ -15,7 +15,7 @@
 | Stage | Branch | Version | Status |
 |---|---|---|---|
 | 0 Plan (folders, Firestore, rules, character pack, rendering) | `main` | — | **Done** |
-| 1 Test scene: placeholder goat + day/night ambient light | `stage-1-test-scene` | 0.1.0 | Implemented, awaiting iPhone test |
+| 1 Test scene: placeholder goat + day/night ambient light | `stage-1-test-scene` | 0.1.0 | **Done** (released) |
 | 2 Character pack, layers, expressions, animations | `stage-2-character` | 0.2.0 | Implemented, awaiting iPhone test |
 | 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | Pending |
 | 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | Pending |
