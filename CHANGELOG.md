@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   character, separate from the display name.
 - Today's goals sheet and HUD (coins, energy, altitude and progress to the next milestone), goal editor,
   goal list, settings and toasts, all in Brazilian Portuguese.
+- Shop: spend coins on clothes and accessories that fit the active character; achievement items show what
+  unlocks them. The coin balance is derived from earnings minus purchases.
+- Wardrobe: wear or take off owned items, one per slot (head, neck, torso, hand, legs, feet). What each
+  character wears is saved per character and applied to the scene.
+- First achievement, "first-week" (completions on 7 different days), which unlocks the bell collar.
 - Local persistence (versioned, with recovery and backup when stored data is unreadable).
 - About 100 new unit tests for the calendar, goal rules, scoring, streak, rewards, summaries, the game
   actions and persistence.

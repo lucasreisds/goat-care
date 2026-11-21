@@ -27,6 +27,9 @@ export function parseState(raw: string): GameState | null {
     ...(data as unknown as GameState),
     profile: { ...defaults.profile, ...(data.profile as object) } as GameState['profile'],
     settings: { ...defaults.settings, ...(data.settings as object) } as GameState['settings'],
+    // Added in 0.4.0: saves from earlier versions do not have them yet.
+    inventory: isObj(data.inventory) ? (data.inventory as GameState['inventory']) : defaults.inventory,
+    wardrobe: isObj(data.wardrobe) ? (data.wardrobe as GameState['wardrobe']) : defaults.wardrobe,
   };
 }
 

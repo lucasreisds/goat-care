@@ -10,6 +10,7 @@ import {
 } from '../core/game';
 import { nextMilestone, progressToNextMilestone } from '../core/progression/rewards';
 import { characterNameOf, totalsOf, type GameState } from '../core/state';
+import { outfitFor } from '../core/wardrobe';
 import { dayKeyOf } from '../core/time/calendar';
 import { loadState, saveState, type KeyValueStore } from '../data/localStore';
 import { strings } from '../i18n';
@@ -22,7 +23,9 @@ import { openGoalsList } from './screens/goalsList';
 import { openMood } from './screens/mood';
 import { openOnboarding } from './screens/onboarding';
 import { openMenu, openSettings } from './screens/settings';
+import { openShop } from './screens/shop';
 import { openSummary, openWeeklyReview } from './screens/summary';
+import { openWardrobe } from './screens/wardrobe';
 
 const ui = strings.ui;
 const SPEECH_MS = 5200;
@@ -100,7 +103,13 @@ export class App implements AppContext {
     }, SPEECH_MS);
   }
 
+  get assets(): CharacterAssets {
+    return this.deps.assets;
+  }
+
   readonly open = {
+    shop: (): void => openShop(this),
+    wardrobe: (): void => openWardrobe(this),
     goalEditor: (goalId?: string): void => openGoalEditor(this, goalId),
     goalsList: (): void => openGoalsList(this),
     weeklyReview: (weekKey: string): void => openWeeklyReview(this, weekKey),
@@ -121,6 +130,19 @@ export class App implements AppContext {
     const character = this.scene().character;
     const stage = this.stageId(this.current);
     if (character.stage !== stage) character.setStage(stage);
+
+    // Dress the character in what the wardrobe says (slots are replaced, extras taken off).
+    const { pack, items } = this.deps.assets;
+    const wanted = outfitFor(this.current, items.map((i) => i.def), pack.manifest);
+    for (const id of character.equippedIds) {
+      const def = items.find((i) => i.def.id === id)?.def;
+      if (def && !wanted.includes(id)) character.unequip(def.slot);
+    }
+    for (const id of wanted) {
+      if (character.equippedIds.includes(id)) continue;
+      const item = items.find((i) => i.def.id === id);
+      if (item) character.equip(item);
+    }
   }
 
   /** Runs periodically and when the app comes back: day rollover, pending changes, weekly review. */

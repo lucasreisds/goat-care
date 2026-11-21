@@ -42,6 +42,10 @@ export interface GameState {
   moods: Record<DayKey, MoodEntry>;
   /** Monday of weeks whose review was done or dismissed. */
   weeklyReviews: Record<DayKey, { at: string }>;
+  /** Items bought with coins (what was paid is kept so the balance is always derivable). */
+  inventory: Record<string, { at: string; paid: number }>;
+  /** What each character wears: wardrobe[characterId][slot] = itemId. */
+  wardrobe: Record<string, Record<string, string>>;
 }
 
 export const DEFAULT_CHARACTER_ID = 'mountain-goat';
@@ -55,6 +59,8 @@ export function initialState(): GameState {
     completions: [],
     moods: {},
     weeklyReviews: {},
+    inventory: {},
+    wardrobe: {},
   };
 }
 
@@ -65,12 +71,14 @@ export interface Totals {
   altitude: number;
 }
 
-/** Totals are derived from the completions, so they can never drift. */
+/** Totals are derived from completions and purchases, so they can never drift. */
 export function totalsOf(state: GameState): Totals {
-  return state.completions.reduce<Totals>(
+  const earned = state.completions.reduce<Totals>(
     (t, c) => ({ coins: t.coins + c.coins, energy: t.energy + c.energy, altitude: t.altitude + c.altitude }),
     { coins: 0, energy: 0, altitude: 0 },
   );
+  const spent = Object.values(state.inventory).reduce((sum, entry) => sum + entry.paid, 0);
+  return { ...earned, coins: earned.coins - spent };
 }
 
 export const characterNameOf = (state: GameState): string =>

@@ -18,7 +18,7 @@
 | 1 Test scene: placeholder goat + day/night ambient light | `stage-1-test-scene` | 0.1.0 | **Done** (released) |
 | 2 Character pack, layers, expressions, animations | `stage-2-character` | 0.2.0 | Implemented, awaiting iPhone test |
 | 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | Implemented, awaiting iPhone test |
-| 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | Pending |
+| 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | Implemented, awaiting iPhone test |
 | 5 Login, pairing, realtime ranking, caresses | `stage-5-online-ranking` | 0.5.0 | Pending |
 | 6 Notifications and PWA polish (official publish) | `stage-6-notifications-pwa` | 1.0.0 | Pending |
 
@@ -38,6 +38,8 @@ Flow: stage branches start from `develop`, merge back into `develop`, release to
 
 10. **Rewards (stage 3 defaults, easy to retune in `core/progression/rewards.ts`):** coins = 2 per base point and energy = 1 per base point (both follow the goal's own value and ignore the daily cap, so a capped day never feels wasted); altitude = 5 m per awarded point (so the cap also limits the climb); awarded points = round(base × (1 + streak bonus)) cut down to what is left of the daily cap. A goal can be completed at most once per day; goals created today start tomorrow. Streak = consecutive days with at least one completion, counted up to yesterday; days with nothing scheduled are neutral.
 11. **Weekly review** is offered on Mondays for the previous week, only if enabled and not yet handled; closing it in any way marks it handled and leaves every goal untouched.
+
+12. **Shop and wardrobe (stage 4):** the coin balance = coins earned − `inventory[*].paid`, never stored. Achievement items are owned automatically once the achievement is met (achievements are derived from state, in `core/progression/achievements.ts`); "first-week" = completions on 7 different days. What is worn lives in `wardrobe[characterId][slot]`, one item per slot, and is ignored if the item is no longer owned or compatible. Old saves without `inventory`/`wardrobe` load with empty defaults.
 
 ---
 
