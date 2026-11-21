@@ -54,6 +54,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dev panel controls for stage, expression, animation and items.
 - Unit tests for manifest validation, item compatibility, stage by altitude, animation player and springs.
 
+### Changed
+- The scene is zoomed in: the internal resolution dropped from about 180-200 px wide to 128-160 px, so the
+  character fills roughly half the screen width instead of a third, and stands closer to the goals sheet.
+- The night cabin was recomposed around the character: the room has a fixed height (about 2.5 characters)
+  under a tie beam, with a gabled roof and rafters taking the extra height on tall phones; the fireplace
+  got a stone chimney, the window is smaller and sits above the character, and the lantern hangs from
+  the beam.
+
 ## [0.1.0] - 2026-11-20
 
 ### Added

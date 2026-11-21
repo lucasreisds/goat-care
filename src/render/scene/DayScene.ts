@@ -216,10 +216,10 @@ export class DayScene {
     this.back.addChild(new Sprite(paintSky(L)));
 
     // taller screens get taller peaks as well as more sky
-    const extra = Math.max(0, L.groundY - 236);
-    const farAmp = Math.round(96 + extra * 0.3);
+    const extra = Math.max(0, L.groundY - 200);
+    const farAmp = Math.round(92 + extra * 0.5);
     const farBase = L.groundY - 68;
-    const midAmp = Math.round(62 + extra * 0.15);
+    const midAmp = Math.round(58 + extra * 0.25);
     const midBase = L.groundY - 38;
 
     [
