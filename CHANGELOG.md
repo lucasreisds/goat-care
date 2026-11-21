@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-20
+
 ### Added
 - Project scaffold: Vite + TypeScript (strict) + PixiJS 8, Vitest.
 - Portrait pixel-art stage scaled by an integer factor with `image-rendering: pixelated`, capped at
@@ -28,3 +30,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Decisions and stage status recorded in `CLAUDE.md`; project conventions (English-only code,
   Keep a Changelog, SemVer).
 - Changelog following Keep a Changelog.
+
+[Unreleased]: https://github.com/lucasreisds/goat-care/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/lucasreisds/goat-care/releases/tag/v0.1.0
