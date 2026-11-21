@@ -1,5 +1,6 @@
 import type { GameState } from '../core/state';
 import type { DayKey } from '../core/time/calendar';
+import type { Session } from '../online/session';
 import type { CharacterAssets, HomeScene } from '../render/HomeScene';
 
 /** Fired on `window` after every state change so open screens can redraw. */
@@ -16,6 +17,12 @@ export interface AppContext {
   scene(): HomeScene;
   /** The loaded character pack and item catalog. */
   readonly assets: CharacterAssets;
+  /** The online side: couple, partner, ranking and caresses. */
+  readonly session: Session;
+  /** The signed-in account. */
+  readonly account: { email: string; signOut(): Promise<void> };
+  /** A still picture of the active character pack at a stage, wearing the given items. */
+  portrait(stageId: string, outfit: readonly string[]): HTMLCanvasElement;
   open: {
     shop(): void;
     wardrobe(): void;
@@ -26,5 +33,8 @@ export interface AppContext {
     mood(): void;
     settings(): void;
     menu(): void;
+    ranking(): void;
+    caresses(): void;
+    couple(): void;
   };
 }

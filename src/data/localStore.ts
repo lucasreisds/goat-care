@@ -30,6 +30,8 @@ export function parseState(raw: string): GameState | null {
     // Added in 0.4.0: saves from earlier versions do not have them yet.
     inventory: isObj(data.inventory) ? (data.inventory as GameState['inventory']) : defaults.inventory,
     wardrobe: isObj(data.wardrobe) ? (data.wardrobe as GameState['wardrobe']) : defaults.wardrobe,
+    // Added in 0.5.0.
+    giftsSent: isObj(data.giftsSent) ? (data.giftsSent as GameState['giftsSent']) : defaults.giftsSent,
   };
 }
 

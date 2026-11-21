@@ -19,7 +19,7 @@
 | 2 Character pack, layers, expressions, animations | `stage-2-character` | 0.2.0 | Implemented, awaiting iPhone test |
 | 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | Implemented, awaiting iPhone test |
 | 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | Implemented, awaiting iPhone test |
-| 5 Login, pairing, realtime ranking, caresses | `stage-5-online-ranking` | 0.5.0 | Pending |
+| 5 Login, pairing, realtime ranking, caresses | `stage-5-online-ranking` | 0.5.0 | Implemented, awaiting iPhone test |
 | 6 Notifications and PWA polish (official publish) | `stage-6-notifications-pwa` | 1.0.0 | Pending |
 
 Flow: stage branches start from `develop`, merge back into `develop`, release to `main` with tag `vX.Y.Z` and a `CHANGELOG.md` entry. Firebase Hosting is configured from stage 1 for **preview channels only** (see `docs/firebase-setup.md`); the official live deploy is stage 6.
@@ -40,6 +40,13 @@ Flow: stage branches start from `develop`, merge back into `develop`, release to
 11. **Weekly review** is offered on Mondays for the previous week, only if enabled and not yet handled; closing it in any way marks it handled and leaves every goal untouched.
 
 12. **Shop and wardrobe (stage 4):** the coin balance = coins earned − `inventory[*].paid`, never stored. Achievement items are owned automatically once the achievement is met (achievements are derived from state, in `core/progression/achievements.ts`); "first-week" = completions on 7 different days. What is worn lives in `wardrobe[characterId][slot]`, one item per slot, and is ignored if the item is no longer owned or compatible. Old saves without `inventory`/`wardrobe` load with empty defaults.
+
+13. **Online data layout (stage 5):** `users/{uid}` is private (`coupleId` plus a `state` map with profile, moods, weekly reviews, inventory, wardrobe, gifts sent and late completions). Everything shared lives under `couples/{coupleId}`: `members/{uid}` (the card the partner sees: names, total altitude, outfit, owned items), `goals/{goalId}`, `completions/{uid_goalId_dayKey}` (the id enforces one completion per goal per day), `days/{uid_dayKey}` and `weeks/{weekKey}/scores/{uid}` (counters that only move in the same batch as a new completion, each carrying `lastCompletionId` so the rules can cross-check with `getAfter()`), and `caresses/{id}`. A person belongs to at most one couple; leaving a couple is not supported yet.
+14. **A couple can start with one member.** Whoever creates it plays right away and invites the partner later from Menu > Dupla. Joining consumes the invite, adds the member and sets `users/{uid}.coupleId` in one batch.
+15. **Daily cap changes:** the couple stores `dailyCap`, `capNext { value, from }` and `capProposal { value, by }`. One member proposes, only the OTHER can accept, and accepting sets `capNext.from` to tomorrow (rules check it against `request.time`) while folding a change already in force into `dailyCap`. Range 5 to 50; a couple of one cannot change it.
+16. **Gifts:** a gift is a `caresses` document of kind `gift` whose `ref` is an item id. The sender pays the item's coin price (`giftsSent`, subtracted from the balance like a purchase); the receiver gets the item in the inventory with `paid: 0`. Coins stay client-side and are not validated by rules (they are personal, not competitive).
+17. **State source in stage 5:** the app composes `GameState` from Firestore listeners (persistent local cache) instead of `localStorage`. Only the completion sync queue is kept in `localStorage` (`goat-care/queue/{uid}`), because completions must be recalculated in a transaction at sync time (decision 4). The weekly ranking is derived live from the week's completions; `weeks/*/scores` is read for the history.
+18. **Local testing:** `npm run emulators` (Auth + Firestore, needs Java 21) with `npm run dev:emulators` (mode `emulator`, project `demo-goat-care`, reads `.env.emulator`), and `npm run test:rules` for the security rules. Rules are deployed with `firebase deploy --only firestore:rules`.
 
 ---
 

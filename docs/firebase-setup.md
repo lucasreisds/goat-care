@@ -10,9 +10,10 @@ until then use **preview channels** to open test builds on your iPhone.
 3. In the project: **Build > Hosting > Get started** (just click through; the CLI does the real deploy).
 4. **Project settings (gear) > General > Your apps > Web (`</>`)** > register the app (nickname `goat-care`,
    leave "Firebase Hosting" unchecked). Copy the `firebaseConfig` values into a local `.env`
-   (see `.env.example`). Stage 1 does not read them yet; stage 5 does.
-5. Stage 5 only: **Build > Authentication > Sign-in method > Email/Password** (enable), and
-   **Build > Firestore Database > Create database** (production mode, region `southamerica-east1`).
+   (see `.env.example`). They are read at build time, so rebuild after changing them.
+5. From stage 5: **Build > Authentication > Sign-in method > Email/Password** (enable; leave
+   "Email link (passwordless sign-in)" off), and **Build > Firestore Database > Create database**
+   (production mode, region `southamerica-east1`). Then follow section 5 to publish the security rules.
 
 The free **Spark** plan is enough for everything in this project.
 
@@ -64,7 +65,71 @@ Notes:
 - `index.html` is served with `no-cache` and assets are hashed and cached for a year, so a normal
   reopen picks up new builds.
 
-## 5. Official deploy (stage 6)
+## 5. Stage 5: accounts, Firestore rules and local emulators
+
+### Publish the security rules (required once, and again whenever `firestore.rules` changes)
+
+```powershell
+npx firebase-tools@15.37.0 deploy --only firestore:rules
+```
+
+Until this is done the database refuses everything (production mode) and the app cannot get past
+the name screen.
+
+### Authorized domains and email templates
+
+- **Authentication > Settings > Authorized domains** already lists `<project>.web.app` and
+  `<project>.firebaseapp.com`, which covers the preview channels.
+- **Authentication > Templates**: set the language to Portuguese (Brazil) so the verification and
+  password-reset emails arrive in Portuguese. Free accounts send from `noreply@<project>.firebaseapp.com`;
+  the first message often lands in spam.
+
+### Test with two people on the iPhone
+
+1. `npm run deploy:preview`, open the URL in Safari and add it to the Home Screen (section 4).
+2. Create an account. The verification link opens in **Safari**, not in the installed app: after
+   tapping it, go back to the Goat Care icon and tap **"Já confirmei meu e-mail"**.
+3. Choose your name and the goat's name, then **"Criar minha dupla"**. The invite code appears
+   (also under Menu > Dupla); it is valid for 30 minutes and works once.
+4. On the second phone: create the other account, verify it, and type the code under
+   **"Tenho um código de convite"**.
+5. Create goals on both phones (they start the next day), complete them and watch the
+   **ranking** (the trophy bar at the top) move on the other phone. Send a **carinho** with the
+   envelope button. To test offline, turn on Airplane Mode, complete a goal, then reconnect.
+6. The daily cap is under Menu > Dupla: one phone proposes, the other accepts, and it applies the
+   next day.
+
+### Run everything locally with the emulators
+
+Needs **Java 21 or newer** (`java -version`); for example `winget install EclipseAdoptium.Temurin.21.JDK`.
+
+```powershell
+npm run emulators
+```
+
+```powershell
+npm run dev:emulators
+```
+
+The second command starts the app in `emulator` mode (it reads `.env.emulator`: project
+`demo-goat-care`, no real data is touched). Sign-up emails are not sent: the verification link is
+printed in the terminal running the emulators. To act as two people at once, open
+`http://localhost:5173` in one tab and `http://127.0.0.1:5173` in another (different origins keep
+separate logins).
+
+Security-rules tests (they start and stop the Firestore emulator by themselves):
+
+```powershell
+npm run test:rules
+```
+
+### Limits worth knowing (Spark plan)
+
+- Firestore: 50,000 reads and 20,000 writes per day, far above what two people use.
+- No Cloud Functions: the daily cap and the weekly closing are enforced by the security rules.
+- Leaving a couple or deleting an account is not in the app yet; do it in the Firebase console.
+
+## 6. Official deploy (stage 6)
 
 ```powershell
 npm run build
