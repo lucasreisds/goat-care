@@ -147,9 +147,20 @@ npm run test:rules
 1. **Web push key (VAPID).** Firebase Console > Project settings > Cloud Messaging > Web Push
    certificates > **Generate key pair**. Put the public key in `.env` as `VITE_FIREBASE_VAPID_KEY`
    (and rebuild/redeploy; the build bakes it in).
-2. **Service account.** Project settings > Service accounts > **Generate new private key** (a JSON file).
-   Treat it like a password: never commit it. In GitHub: repository > Settings > Secrets and variables >
-   Actions > **New repository secret**, name `FIREBASE_SERVICE_ACCOUNT`, value = the whole JSON.
+2. **Service account.** Firebase Console > Project settings > Service accounts > **Generate new private key**
+   (downloads a JSON file). Treat it like a password: never commit it. Save it as a GitHub secret named
+   `FIREBASE_SERVICE_ACCOUNT` with the whole JSON as the value, by either way:
+   - **Browser:** open <https://github.com/lucasreisds/goat-care/settings/secrets/actions> directly (you
+     must be signed in as the repository owner), click **New repository secret**, fill the name and paste
+     the JSON. If you navigate by hand: the repository's **Settings** tab (under the "..." menu when the
+     window is narrow) > left sidebar **Secrets and variables** > **Actions**.
+   - **Terminal** (skips the menus; needs the GitHub CLI: `winget install GitHub.cli`, then `gh auth login`):
+
+     ```powershell
+     Get-Content "$HOME\Downloads\your-key-file.json" -Raw | gh secret set FIREBASE_SERVICE_ACCOUNT --repo lucasreisds/goat-care
+     ```
+
+     Delete the downloaded JSON afterwards.
 3. **Rules.** The device documents have their own rules: `npx firebase-tools@15.37.0 deploy --only firestore:rules`.
 4. **Try it without sending anything:** GitHub > Actions > "Send notifications" > Run workflow (leave
    "dry run" ticked) and read the log. Untick it to send for real. After that it runs every 5 minutes.
