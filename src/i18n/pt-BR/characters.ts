@@ -1,6 +1,14 @@
-/** Names of characters and items shown to the player (keys come from pack and item manifests). */
+/** Names of characters, stages and items shown to the player (keys come from pack and item manifests). */
 export const characters: Readonly<Record<string, string>> = {
   'character.mountainGoat': 'Cabra das Montanhas',
+};
+
+/** Evolution stage names, by stage id from the pack manifest. */
+export const stageNames: Readonly<Record<string, string>> = {
+  kid: 'filhote',
+  young: 'jovem',
+  adult: 'adulto',
+  legendary: 'lendário',
 };
 
 export const itemNames: Readonly<Record<string, string>> = {

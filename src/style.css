@@ -31,26 +31,9 @@ body {
 
 #app canvas {
   display: block;
+  transition: transform 0.25s ease;
   image-rendering: pixelated;
   touch-action: none;
-}
-
-.hint {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
-  text-align: center;
-  color: #fff;
-  font-size: 15px;
-  letter-spacing: 0.02em;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-  pointer-events: none;
-  transition: opacity 0.6s ease;
-}
-
-.hint.hidden {
-  opacity: 0;
 }
 
 .debug {

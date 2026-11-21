@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Recurring goals: free title, difficulty (easy, medium, hard), optional reminder time, and a frequency of
+  every day, specific weekdays, X times per week (any day) or one-off (with or without a date). Maximum of
+  10 active goals per person.
+- New goals, edits, pauses and archives apply from the next day; paused goals neither break the streak nor
+  count as a miss.
+- Rewards per completion: ranking points (easy 1, medium 3, hard 5) with a daily cap (default 15) that
+  trims points but never discards the completion, a small streak bonus (+10% every 3 days in a row, up to
+  +30%), coins, energy and altitude (5 m per point).
+- Altitude drives evolution (the character changes stage at 700, 3000 and 8250 m) and unlocks milestones
+  at 150, 350, 700, 1500, 2250, 3000, 4500, 6000 and 8250 m.
+- Day and week turn at midnight in the pair's time zone (default America/Sao_Paulo); the week starts on
+  Monday.
+- Weekly summary, and an optional weekly review offered on Mondays (keep, edit, pause or archive each goal,
+  or create new ones); ignoring it changes nothing.
+- Daily mood check-in; the character answers by name with a matching expression.
+- Onboarding with the player's name and a name for the character (up to 16 characters, with a random
+  suggestion button); both can be changed in the settings. The character name is stored in the profile per
+  character, separate from the display name.
+- Today's goals sheet and HUD (coins, energy, altitude and progress to the next milestone), goal editor,
+  goal list, settings and toasts, all in Brazilian Portuguese.
+- Local persistence (versioned, with recovery and backup when stored data is unreadable).
+- About 100 new unit tests for the calendar, goal rules, scoring, streak, rewards, summaries, the game
+  actions and persistence.
 - Data-driven character pack format (`src/character/pack/schema.ts`): manifest + PNG files named by
   convention (`bodies/<stage>/<animation>.png`, `expressions/<id>.png`, `parts/*.png`), validated at load
   with every problem listed at once. Per-frame named anchors for head, between the horns, top of head,
