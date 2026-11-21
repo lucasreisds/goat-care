@@ -47,6 +47,12 @@ export function mountDebugPanel(ctx: DebugContext): void {
 
   const panel = document.createElement('div');
   panel.className = 'debug';
+  panel.hidden = true;
+  const toggle = document.createElement('button');
+  toggle.className = 'dev-toggle';
+  toggle.textContent = 'dev';
+  toggle.addEventListener('click', () => (panel.hidden = !panel.hidden));
+  document.body.appendChild(toggle);
 
   // --- time of day
   const auto = document.createElement('input');

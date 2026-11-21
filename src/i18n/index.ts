@@ -1,8 +1,10 @@
-import { characters, itemNames } from './pt-BR/characters';
+import { characters, itemNames, stageNames } from './pt-BR/characters';
+import { cheers, greetings, moodExpression, moodReplies } from './pt-BR/dialogue';
+import { suggestedNames } from './pt-BR/names';
 import { ui } from './pt-BR/ui';
 
 /** Single locale for now (pt-BR). Keep strings out of logic. */
-export const strings = { ui } as const;
+export const strings = { ui, cheers, greetings, moodReplies, moodExpression, suggestedNames, stageNames } as const;
 
 const dictionary: Readonly<Record<string, string>> = { ...characters, ...itemNames };
 

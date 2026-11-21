@@ -43,7 +43,7 @@ export class HomeScene {
   constructor(
     private readonly root: Container,
     private readonly hours: HourSource,
-    private readonly layout: Layout,
+    readonly layout: Layout,
     assets: CharacterAssets,
     snapshot?: CharacterSnapshot,
   ) {
@@ -110,11 +110,16 @@ export class HomeScene {
     for (const child of this.root.removeChildren()) child.destroy({ children: true });
   }
 
+  /** Hop plus the goal-complete light burst. */
+  celebrate(): void {
+    this.character.celebrate();
+    this.burst.trigger(this.layout.centerX, this.layout.feetY - 32);
+  }
+
   /** Returns true if the tap landed on the character. */
   handleTap(x: number, y: number): boolean {
     if (!this.character.contains(x, y)) return false;
-    this.character.celebrate();
-    this.burst.trigger(this.layout.centerX, this.layout.feetY - 32);
+    this.celebrate();
     return true;
   }
 

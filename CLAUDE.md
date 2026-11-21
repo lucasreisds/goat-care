@@ -17,7 +17,7 @@
 | 0 Plan (folders, Firestore, rules, character pack, rendering) | `main` | — | **Done** |
 | 1 Test scene: placeholder goat + day/night ambient light | `stage-1-test-scene` | 0.1.0 | **Done** (released) |
 | 2 Character pack, layers, expressions, animations | `stage-2-character` | 0.2.0 | Implemented, awaiting iPhone test |
-| 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | Pending |
+| 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | Implemented, awaiting iPhone test |
 | 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | Pending |
 | 5 Login, pairing, realtime ranking, caresses | `stage-5-online-ranking` | 0.5.0 | Pending |
 | 6 Notifications and PWA polish (official publish) | `stage-6-notifications-pwa` | 1.0.0 | Pending |
@@ -35,6 +35,9 @@ Flow: stage branches start from `develop`, merge back into `develop`, release to
 7. **Verified email is required** (`request.auth.token.email_verified == true`) to write couple data and to create/use invites. Impact: (a) rules tests must build contexts with `{ email_verified: true }` plus a negative test with `false` for every couple write; (b) the app needs an "I verified my email" button that calls `user.reload()` and `getIdToken(true)`, otherwise the cached token stays unverified for up to 1 h; (c) on iOS the verification link opens in Safari, not in the installed PWA, so the user has to come back to the app manually; (d) the Auth emulator needs users flagged as verified for end-to-end tests.
 8. **Evolution is driven by altitude only** (`minAltitude` per stage). Achievement unlocks apply to new characters and items, not to stages.
 9. **No local-to-Firebase data migration.** Stages 1–4 use a throwaway local store; stage 5 starts clean. Only the offline sync queue survives as a mechanism.
+
+10. **Rewards (stage 3 defaults, easy to retune in `core/progression/rewards.ts`):** coins = 2 per base point and energy = 1 per base point (both follow the goal's own value and ignore the daily cap, so a capped day never feels wasted); altitude = 5 m per awarded point (so the cap also limits the climb); awarded points = round(base × (1 + streak bonus)) cut down to what is left of the daily cap. A goal can be completed at most once per day; goals created today start tomorrow. Streak = consecutive days with at least one completion, counted up to yesterday; days with nothing scheduled are neutral.
+11. **Weekly review** is offered on Mondays for the previous week, only if enabled and not yet handled; closing it in any way marks it handled and leaves every goal untouched.
 
 ---
 
