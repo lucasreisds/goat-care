@@ -13,6 +13,7 @@ import { characterNameOf, totalsOf, type GameState } from '../core/state';
 import { outfitFor } from '../core/wardrobe';
 import { dayKeyOf } from '../core/time/calendar';
 import type { Caress } from '../online/model';
+import type { PushController } from '../online/push';
 import type { Session } from '../online/session';
 import { lookup, strings } from '../i18n';
 import type { CharacterAssets, HomeScene } from '../render/HomeScene';
@@ -26,6 +27,7 @@ import { openGoalsList } from './screens/goalsList';
 import { openMood } from './screens/mood';
 import { openRanking } from './screens/ranking';
 import { openMenu, openSettings } from './screens/settings';
+import { openNotifications } from './screens/notifications';
 import { openShop } from './screens/shop';
 import { openSummary, openWeeklyReview } from './screens/summary';
 import { openWardrobe } from './screens/wardrobe';
@@ -37,6 +39,7 @@ export interface AppDeps {
   /** Where the game state lives: Firestore listeners plus the offline sync queue. */
   session: Session;
   account: { email: string; signOut(): Promise<void> };
+  push: PushController;
   portrait: (stageId: string, outfit: readonly string[]) => HTMLCanvasElement;
   assets: CharacterAssets;
   /** The CURRENT scene (it is rebuilt when the screen size changes). */
@@ -100,6 +103,10 @@ export class App implements AppContext {
     return this.deps.session;
   }
 
+  get push(): PushController {
+    return this.deps.push;
+  }
+
   get account(): AppDeps['account'] {
     return this.deps.account;
   }
@@ -131,6 +138,7 @@ export class App implements AppContext {
   }
 
   readonly open = {
+    notifications: (): void => openNotifications(this),
     shop: (): void => openShop(this),
     wardrobe: (): void => openWardrobe(this),
     goalEditor: (goalId?: string): void => openGoalEditor(this, goalId),

@@ -129,11 +129,46 @@ npm run test:rules
 - No Cloud Functions: the daily cap and the weekly closing are enforced by the security rules.
 - Leaving a couple or deleting an account is not in the app yet; do it in the Firebase console.
 
-## 6. Official deploy (stage 6)
+## 6. Stage 6: notifications
+
+### What iOS allows (read this first)
+
+- Push only works for the app **installed on the Home Screen** (iOS/iPadOS **16.4 or newer**). In a
+  plain Safari tab the notification option explains this instead of asking.
+- The permission prompt only appears after a **tap** (Menu > Notificações > "Ativar notificações neste
+  aparelho"). If you tap "Don't allow", change it later in iOS Settings > Notifications > Goat Care.
+- iOS has **no local scheduling** for web apps, so a reminder at 07:30 needs a server to send it. The
+  free Spark plan has no Cloud Functions, so a **GitHub Actions** job does it (below). Delivery is best
+  effort and can be a few minutes late; a reminder more than 3 hours late is dropped.
+- Every push must show a notification (iOS revokes permission otherwise); the service worker always does.
+
+### One-time setup
+
+1. **Web push key (VAPID).** Firebase Console > Project settings > Cloud Messaging > Web Push
+   certificates > **Generate key pair**. Put the public key in `.env` as `VITE_FIREBASE_VAPID_KEY`
+   (and rebuild/redeploy; the build bakes it in).
+2. **Service account.** Project settings > Service accounts > **Generate new private key** (a JSON file).
+   Treat it like a password: never commit it. In GitHub: repository > Settings > Secrets and variables >
+   Actions > **New repository secret**, name `FIREBASE_SERVICE_ACCOUNT`, value = the whole JSON.
+3. **Rules.** The device documents have their own rules: `npx firebase-tools@15.37.0 deploy --only firestore:rules`.
+4. **Try it without sending anything:** GitHub > Actions > "Send notifications" > Run workflow (leave
+   "dry run" ticked) and read the log. Untick it to send for real. After that it runs every 5 minutes.
+
+GitHub pauses scheduled workflows after 60 days without repository activity; open the Actions tab and
+re-enable it if that ever happens. The job reads only a handful of documents per run (well inside the
+50,000 reads/day free quota).
+
+To run the sender from your own machine instead: set `FIREBASE_SERVICE_ACCOUNT` to the JSON,
+`DRY_RUN=1`, then `npm run notify:dry`.
+
+## 7. Official deploy (stage 6)
+
+Publishes the app to `https://<project>.web.app` and the security rules together:
 
 ```powershell
-npm run build
-npx firebase-tools@15.37.0 deploy --only hosting
+npm run deploy:live
 ```
 
-This publishes to `https://<project>.web.app`. Do not do this before stage 6.
+It is a different install from the preview-channel icon: on the iPhone add the live URL to the Home
+Screen again. Auth already authorizes `<project>.web.app`. The service worker is served with `no-cache`, so new releases reach installed apps on
+their next open.

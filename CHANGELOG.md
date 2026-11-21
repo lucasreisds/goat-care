@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Offline app shell: a service worker caches the app so it opens without a connection (new releases are
+  picked up on the next open), plus a web app `id` and categories in the manifest.
+- Push notifications (iOS 16.4+ with the app on the Home Screen): goal reminders at the reminder time and
+  a notice when the partner sends a caress, with a Notifications screen (Menu) to turn them on per device
+  and choose what to be told about. Delivery runs from a free scheduled GitHub Actions job (no Cloud
+  Functions) and needs a VAPID key and a service-account secret; see `docs/firebase-setup.md`.
+- Security rules for `users/{uid}/devices` (push registrations), with rules tests.
+- `npm run deploy:live` publishes hosting and the security rules together.
 - Recurring goals: free title, difficulty (easy, medium, hard), optional reminder time, and a frequency of
   every day, specific weekdays, X times per week (any day) or one-off (with or without a date). Maximum of
   10 active goals per person.

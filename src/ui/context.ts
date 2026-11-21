@@ -1,5 +1,6 @@
 import type { GameState } from '../core/state';
 import type { DayKey } from '../core/time/calendar';
+import type { PushController } from '../online/push';
 import type { Session } from '../online/session';
 import type { CharacterAssets, HomeScene } from '../render/HomeScene';
 
@@ -21,6 +22,8 @@ export interface AppContext {
   readonly session: Session;
   /** The signed-in account. */
   readonly account: { email: string; signOut(): Promise<void> };
+  /** Push notifications for this device. */
+  readonly push: PushController;
   /** A still picture of the active character pack at a stage, wearing the given items. */
   portrait(stageId: string, outfit: readonly string[]): HTMLCanvasElement;
   open: {
@@ -36,5 +39,6 @@ export interface AppContext {
     ranking(): void;
     caresses(): void;
     couple(): void;
+    notifications(): void;
   };
 }

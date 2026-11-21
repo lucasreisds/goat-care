@@ -16,6 +16,8 @@ npm run build            # type-check + production build into dist/
 npm run icons            # regenerate placeholder PWA icons
 npm run generate:goat    # regenerate the placeholder goat pack + items (public/characters, public/items)
 npm run deploy:preview   # build + Firebase Hosting preview channel (see docs/firebase-setup.md)
+npm run deploy:live      # official publish: hosting + rules (stage 6, only when releasing)
+npm run notify:dry       # run the push sender locally in dry-run mode (needs FIREBASE_SERVICE_ACCOUNT)
 ```
 
 Useful URLs while developing: `/?debug` (time slider) and `/?hour=22` (pin the hour).
