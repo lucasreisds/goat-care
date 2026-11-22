@@ -1,19 +1,22 @@
 /**
  * The scene is NOT a fixed size. The canvas keeps an integer pixel scale (crisp pixel art)
  * and the internal resolution is derived from the screen, so tall phones get a taller scene
- * instead of empty bars. Width stays near 180 and height near 320-460.
+ * instead of empty bars. Width stays near 128-150 and height near 260-340.
+ *
+ * The scene is deliberately "zoomed in": a 64 px character fills about half the width, so the
+ * pet is the star of the screen and the scenery keeps believable proportions around it.
  */
 export const FPS = 30;
 
-export const MIN_W = 170;
-export const MAX_W = 200;
-export const MIN_H = 300;
-export const MAX_H = 460;
+export const MIN_W = 128;
+export const MAX_W = 160;
+export const MIN_H = 240;
+export const MAX_H = 340;
 
 /** Height of the grass/floor strip at the bottom; sky and walls take the rest. */
-export const GROUND_BAND = 84;
+export const GROUND_BAND = 60;
 /** The character's feet sit this far below the ground line. */
-export const FEET_OFFSET = 10;
+export const FEET_OFFSET = 12;
 
 export interface Layout {
   width: number;

@@ -1,0 +1,332 @@
+rules_version = '2';
+
+// Security model (see CLAUDE.md, decisions 1-7):
+// - Only the two members of a couple read its data; each one writes only their own goals,
+//   completions, counters and member card.
+// - Writing couple data and creating/using invites requires a VERIFIED email.
+// - The daily cap is enforced here: a completion, the day counter and the weekly score are written
+//   in one batch and checked against each other with getAfter().
+// - Days and weeks close by time: writes stop 48 h after the period ends.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function verified() {
+      return signedIn() && request.auth.token.email_verified == true;
+    }
+    function uid() {
+      return request.auth.uid;
+    }
+    function docs() {
+      return /databases/$(database)/documents;
+    }
+    function coupleData(c) {
+      return get(/$(docs())/couples/$(c)).data;
+    }
+    function isMember(c) {
+      return signedIn() && uid() in coupleData(c).members;
+    }
+    function canWrite(c) {
+      return verified() && uid() in coupleData(c).members;
+    }
+
+    // ---------------------------------------------------------------- time
+    function isDayKey(k) {
+      return k is string && k.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+    function utcDate(k) {
+      return timestamp.date(int(k[0:4]), int(k[5:7]), int(k[8:10]));
+    }
+    // Midnight of that day in the couple's fixed offset (e.g. -180 for UTC-3).
+    function dayStart(k, offsetMinutes) {
+      return utcDate(k) + duration.value(-offsetMinutes, 'm');
+    }
+    // A day accepts writes from its start (2 h tolerance for clock/DST drift) until 48 h after it ends.
+    function dayOpen(k, offsetMinutes) {
+      return request.time + duration.value(2, 'h') >= dayStart(k, offsetMinutes)
+        && request.time < dayStart(k, offsetMinutes) + duration.value(72, 'h');
+    }
+    // weekKey is the Monday of the week the day belongs to.
+    function inWeek(dayKey, weekKey) {
+      return utcDate(weekKey).dayOfWeek() == 1
+        && utcDate(dayKey) >= utcDate(weekKey)
+        && utcDate(dayKey) < utcDate(weekKey) + duration.value(7, 'd');
+    }
+
+    // ------------------------------------------------------------- scoring
+    function basePointsOf(difficulty) {
+      return difficulty == 'easy' ? 1 : (difficulty == 'medium' ? 3 : 5);
+    }
+    function capOn(couple, dayKey) {
+      return (couple.capNext != null && dayKey >= couple.capNext.from) ? couple.capNext.value : couple.dailyCap;
+    }
+    function capNow(couple) {
+      return (couple.capNext != null && dayStart(couple.capNext.from, couple.utcOffsetMinutes) <= request.time)
+        ? couple.capNext.value
+        : couple.dailyCap;
+    }
+    function pointsBefore(path) {
+      return exists(path) ? get(path).data.points : 0;
+    }
+
+    // --------------------------------------------------------------- users
+    // Private profile and personal state. `coupleId` can only be set once, to a couple the user is in.
+    match /users/{u} {
+      allow read: if signedIn() && u == uid();
+      allow create: if verified() && u == uid() && request.resource.data.coupleId == null;
+      allow update: if verified() && u == uid()
+        && (request.resource.data.coupleId == resource.data.coupleId
+          || (resource.data.coupleId == null
+            && uid() in getAfter(/$(docs())/couples/$(request.resource.data.coupleId)).data.members));
+
+      // One document per device that receives push notifications. The scheduled job (Admin SDK, which
+      // bypasses these rules) reads them; a client can only manage its own.
+      match /devices/{deviceId} {
+        allow read, delete: if verified() && u == uid();
+        allow create, update: if verified() && u == uid() && validDevice();
+
+        function validDevice() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['token', 'reminders', 'caresses', 'platform', 'createdAt', 'updatedAt'])
+            && d.token is string && d.token.size() > 0 && d.token.size() <= 4096
+            && d.reminders is bool
+            && d.caresses is bool
+            && d.platform in ['ios', 'other']
+            && d.updatedAt == request.time;
+        }
+      }
+    }
+
+    // ------------------------------------------------------------- invites
+    // Single use, short lived, readable only by exact code (never listable).
+    match /invites/{code} {
+      allow get: if verified();
+      allow create: if verified()
+        && code.matches('^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$')
+        && request.resource.data.keys().hasOnly(['coupleId', 'createdBy', 'expiresAt', 'usedBy'])
+        && request.resource.data.createdBy == uid()
+        && request.resource.data.usedBy == null
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time
+        // 30 minutes, plus 5 of tolerance for the device clock
+        && request.resource.data.expiresAt <= request.time + duration.value(35, 'm')
+        && coupleData(request.resource.data.coupleId).members == [uid()];
+      allow update: if verified()
+        && resource.data.usedBy == null
+        && request.time < resource.data.expiresAt
+        && resource.data.createdBy != uid()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy'])
+        && request.resource.data.usedBy == uid()
+        && uid() in getAfter(/$(docs())/couples/$(resource.data.coupleId)).data.members;
+      allow delete: if verified() && resource.data.createdBy == uid();
+    }
+
+    // ------------------------------------------------------------- couples
+    match /couples/{c} {
+      allow get: if signedIn() && uid() in resource.data.members;
+
+      allow create: if verified()
+        && request.resource.data.keys().hasOnly(
+          ['members', 'timezone', 'utcOffsetMinutes', 'dailyCap', 'capNext', 'capProposal', 'joinCode', 'createdAt'])
+        && request.resource.data.members == [uid()]
+        && request.resource.data.timezone is string
+        && request.resource.data.utcOffsetMinutes is int
+        && request.resource.data.utcOffsetMinutes >= -720
+        && request.resource.data.utcOffsetMinutes <= 840
+        && request.resource.data.dailyCap == 15
+        && request.resource.data.capNext == null
+        && request.resource.data.capProposal == null
+        && request.resource.data.joinCode == null
+        && request.resource.data.createdAt == request.time
+        // one couple per person, and the profile must point at it in the same batch
+        && get(/$(docs())/users/$(uid())).data.coupleId == null
+        && getAfter(/$(docs())/users/$(uid())).data.coupleId == c;
+
+      allow update: if verified() && (joins(c) || changesCap());
+
+      // The partner joins with an unused, unexpired invite, which is consumed in the same batch.
+      function joins(c) {
+        let invitePath = /$(docs())/invites/$(request.resource.data.joinCode);
+        return resource.data.members.size() == 1
+          && !(uid() in resource.data.members)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'joinCode'])
+          && request.resource.data.members == resource.data.members.concat([uid()])
+          && get(invitePath).data.coupleId == c
+          && get(invitePath).data.usedBy == null
+          && request.time < get(invitePath).data.expiresAt
+          && getAfter(invitePath).data.usedBy == uid()
+          && get(/$(docs())/users/$(uid())).data.coupleId == null
+          && getAfter(/$(docs())/users/$(uid())).data.coupleId == c;
+      }
+
+      // The daily cap only changes when BOTH agree: one proposes, the other accepts,
+      // and the new value starts on a later day.
+      function changesCap() {
+        let before = resource.data;
+        let after = request.resource.data;
+        let changed = after.diff(before).affectedKeys();
+        return uid() in before.members
+          && changed.hasOnly(['dailyCap', 'capNext', 'capProposal'])
+          && (
+            // propose (or replace a proposal with a counter-proposal)
+            (changed.hasOnly(['capProposal'])
+              && after.capProposal != null
+              && after.capProposal.keys().hasOnly(['value', 'by'])
+              && after.capProposal.by == uid()
+              && after.capProposal.value is int
+              && after.capProposal.value >= 5
+              && after.capProposal.value <= 50)
+            // withdraw or decline
+            || (changed.hasOnly(['capProposal']) && after.capProposal == null)
+            // accept the PARTNER's proposal
+            || (before.capProposal != null
+              && before.capProposal.by != uid()
+              && after.capProposal == null
+              && after.capNext.keys().hasOnly(['value', 'from'])
+              && after.capNext.value == before.capProposal.value
+              && isDayKey(after.capNext.from)
+              && dayStart(after.capNext.from, before.utcOffsetMinutes) > request.time
+              && dayStart(after.capNext.from, before.utcOffsetMinutes) <= request.time + duration.value(26, 'h')
+              && after.dailyCap == capNow(before))
+          );
+      }
+
+      // Public card each member shows the partner (names, outfit, altitude).
+      match /members/{m} {
+        allow read: if isMember(c);
+        allow create, update: if canWrite(c)
+          && m == uid()
+          && request.resource.data.keys().hasOnly(
+            ['displayName', 'characterId', 'characterName', 'altitude', 'outfit', 'owned', 'updatedAt'])
+          && request.resource.data.displayName is string
+          && request.resource.data.displayName.size() <= 30
+          && request.resource.data.characterName is string
+          && request.resource.data.characterName.size() <= 16
+          && request.resource.data.characterId is string
+          && request.resource.data.altitude is number
+          && request.resource.data.outfit is list
+          && request.resource.data.owned is list;
+      }
+
+      // Goals are visible to the partner; only the owner writes (decision 1). Never deleted, only archived.
+      match /goals/{goalId} {
+        allow read: if isMember(c);
+        allow create: if canWrite(c) && validGoal();
+        allow update: if canWrite(c) && resource.data.ownerUid == uid() && validGoal();
+
+        function validGoal() {
+          let d = request.resource.data;
+          return d.ownerUid == uid()
+            && d.id == goalId
+            && d.title is string
+            && d.title.size() > 0
+            && d.title.size() <= 60
+            && d.difficulty in ['easy', 'medium', 'hard']
+            && d.status in ['active', 'paused', 'archived']
+            && d.recurrence is map
+            && isDayKey(d.effectiveFrom);
+        }
+      }
+
+      // One completion per goal per day (the id says so). Created together with the day counter and
+      // the weekly score; never edited or deleted.
+      match /completions/{id} {
+        allow read: if isMember(c);
+        allow create: if canWrite(c) && validCompletion();
+
+        function validCompletion() {
+          let d = request.resource.data;
+          let couple = coupleData(c);
+          let dayPath = /$(docs())/couples/$(c)/days/$(uid() + '_' + d.dayKey);
+          let scorePath = /$(docs())/couples/$(c)/weeks/$(d.weekKey)/scores/$(uid());
+          return d.keys().hasOnly(['uid', 'goalId', 'dayKey', 'weekKey', 'difficulty', 'basePoints',
+              'awardedPoints', 'bonusPct', 'coins', 'energy', 'altitude', 'completedAt'])
+            && d.uid == uid()
+            && d.goalId is string
+            && isDayKey(d.dayKey)
+            && isDayKey(d.weekKey)
+            && id == uid() + '_' + d.goalId + '_' + d.dayKey
+            && inWeek(d.dayKey, d.weekKey)
+            && dayOpen(d.dayKey, couple.utcOffsetMinutes)
+            && d.difficulty in ['easy', 'medium', 'hard']
+            && d.basePoints == basePointsOf(d.difficulty)
+            && d.awardedPoints is int
+            && d.awardedPoints >= 0
+            && d.awardedPoints <= math.ceil(d.basePoints * 1.3)
+            && d.altitude == d.awardedPoints * 5
+            && get(/$(docs())/couples/$(c)/goals/$(d.goalId)).data.ownerUid == uid()
+            // the day counter grows by exactly these points and stays within the cap
+            && getAfter(dayPath).data.lastCompletionId == id
+            && getAfter(dayPath).data.points == pointsBefore(dayPath) + d.awardedPoints
+            && getAfter(dayPath).data.points <= capOn(couple, d.dayKey)
+            // and so does the weekly score
+            && getAfter(scorePath).data.lastCompletionId == id
+            && getAfter(scorePath).data.points == pointsBefore(scorePath) + d.awardedPoints;
+        }
+      }
+
+      // Points per person per day. Only moves together with a NEW completion of that day.
+      match /days/{dayId} {
+        allow read: if isMember(c);
+        allow create, update: if canWrite(c) && validDay();
+
+        function validDay() {
+          let d = request.resource.data;
+          let compPath = /$(docs())/couples/$(c)/completions/$(d.lastCompletionId);
+          return d.keys().hasOnly(['uid', 'dayKey', 'points', 'lastCompletionId'])
+            && d.uid == uid()
+            && dayId == uid() + '_' + d.dayKey
+            && !exists(compPath)
+            && getAfter(compPath).data.uid == uid()
+            && getAfter(compPath).data.dayKey == d.dayKey
+            && d.points == (resource == null ? 0 : resource.data.points) + getAfter(compPath).data.awardedPoints;
+        }
+      }
+
+      // Weekly ranking score per person. Same idea as the day counter.
+      match /weeks/{weekKey}/scores/{scoreUid} {
+        allow read: if isMember(c);
+        allow create, update: if canWrite(c) && validScore();
+
+        function validScore() {
+          let d = request.resource.data;
+          let compPath = /$(docs())/couples/$(c)/completions/$(d.lastCompletionId);
+          return d.keys().hasOnly(['uid', 'weekKey', 'points', 'lastCompletionId'])
+            && d.uid == uid()
+            && scoreUid == uid()
+            && d.weekKey == weekKey
+            && !exists(compPath)
+            && getAfter(compPath).data.uid == uid()
+            && getAfter(compPath).data.weekKey == weekKey
+            && d.points == (resource == null ? 0 : resource.data.points) + getAfter(compPath).data.awardedPoints;
+        }
+      }
+
+      // "Carinhos": predefined messages and item gifts. No free text.
+      match /caresses/{id} {
+        allow read: if isMember(c);
+        allow create: if canWrite(c) && validCaress();
+        // the receiver marks it as seen, nothing else
+        allow update: if canWrite(c)
+          && resource.data.to == uid()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seenAt'])
+          && request.resource.data.seenAt == request.time;
+
+        function validCaress() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['from', 'to', 'kind', 'ref', 'createdAt', 'seenAt'])
+            && d.from == uid()
+            && d.to != uid()
+            && d.to in coupleData(c).members
+            && d.kind in ['message', 'gift']
+            && d.ref is string
+            && d.ref.size() > 0
+            && d.ref.size() <= 40
+            && d.createdAt == request.time
+            && d.seenAt == null;
+        }
+      }
+    }
+  }
+}

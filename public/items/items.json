@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "beanie-blue",
+      "slot": "head",
+      "anchor": "betweenHorns",
+      "compatibleWith": [
+        "*"
+      ],
+      "pivot": [
+        7,
+        11
+      ],
+      "nameKey": "item.beanieBlue",
+      "unlock": {
+        "type": "coins",
+        "cost": 80
+      },
+      "file": "generic/beanie-blue.png"
+    },
+    {
+      "id": "scarf-red",
+      "slot": "neck",
+      "anchor": "neck",
+      "compatibleWith": [
+        "*"
+      ],
+      "pivot": [
+        11,
+        2
+      ],
+      "nameKey": "item.scarfRed",
+      "unlock": {
+        "type": "coins",
+        "cost": 60
+      },
+      "spring": {
+        "stiffness": 90,
+        "damping": 9,
+        "wind": 1.2
+      },
+      "file": "generic/scarf-red.png"
+    },
+    {
+      "id": "sweater-green",
+      "slot": "torso",
+      "anchor": "torso",
+      "compatibleWith": [
+        "*"
+      ],
+      "pivot": [
+        15,
+        12
+      ],
+      "nameKey": "item.sweaterGreen",
+      "unlock": {
+        "type": "coins",
+        "cost": 150
+      },
+      "file": "generic/sweater-green.png"
+    },
+    {
+      "id": "pants-brown",
+      "slot": "legs",
+      "anchor": "legs",
+      "compatibleWith": [
+        "*"
+      ],
+      "pivot": [
+        11,
+        0
+      ],
+      "nameKey": "item.pantsBrown",
+      "unlock": {
+        "type": "coins",
+        "cost": 100
+      },
+      "file": "generic/pants-brown.png"
+    },
+    {
+      "id": "boots-brown",
+      "slot": "feet",
+      "anchor": "feet",
+      "compatibleWith": [
+        "*"
+      ],
+      "pivot": [
+        12,
+        6
+      ],
+      "nameKey": "item.bootsBrown",
+      "unlock": {
+        "type": "coins",
+        "cost": 90
+      },
+      "file": "generic/boots-brown.png"
+    },
+    {
+      "id": "flower-pink",
+      "slot": "hand",
+      "anchor": "hand",
+      "compatibleWith": [
+        "*"
+      ],
+      "pivot": [
+        3,
+        10
+      ],
+      "nameKey": "item.flowerPink",
+      "unlock": {
+        "type": "coins",
+        "cost": 30
+      },
+      "file": "generic/flower-pink.png"
+    },
+    {
+      "id": "bell-collar",
+      "slot": "neck",
+      "anchor": "neck",
+      "compatibleWith": [
+        "mountain-goat"
+      ],
+      "pivot": [
+        6,
+        1
+      ],
+      "nameKey": "item.bellCollar",
+      "unlock": {
+        "type": "achievement",
+        "id": "first-week"
+      },
+      "spring": {
+        "stiffness": 120,
+        "damping": 7,
+        "wind": 0.5
+      },
+      "file": "generic/bell-collar.png"
+    }
+  ]
+}

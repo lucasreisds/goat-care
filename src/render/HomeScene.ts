@@ -1,6 +1,6 @@
 import { Container, Sprite, Texture } from 'pixi.js';
-import { CharacterView } from '../character/CharacterView';
-import { createGoatPlaceholder } from '../character/placeholder/mountain-goat';
+import { CharacterView, type CharacterSnapshot } from '../character/CharacterView';
+import type { LoadedItem, LoadedPack } from '../character/pack/loader';
 import { lerpColor, smoothstep } from '../core/color';
 import type { HourSource } from '../core/time/clock';
 import { CompletionBurst } from './fx/CompletionBurst';
@@ -10,6 +10,11 @@ import { DustMotes, SunRays } from './light/SunRays';
 import { TimeOfDay } from './light/TimeOfDay';
 import { DayScene } from './scene/DayScene';
 import { NightScene } from './scene/NightScene';
+
+export interface CharacterAssets {
+  pack: LoadedPack;
+  items: LoadedItem[];
+}
 
 /** Warm color the character leans toward as the day turns to cabin night. */
 const WARM_TINT = 0xffd9ae;
@@ -25,7 +30,7 @@ export class HomeScene {
   private readonly timeOfDay = new TimeOfDay();
   private readonly day: DayScene;
   private readonly night: NightScene;
-  private readonly character: CharacterView;
+  readonly character: CharacterView;
   private readonly ambient: Sprite;
   private readonly sunRays: SunRays;
   private readonly dust: DustMotes;
@@ -34,12 +39,13 @@ export class HomeScene {
   /** Soft fire spill on the character so the cabin warms the goat, not only the walls. */
   private readonly spill: PointLight;
   private readonly burst = new CompletionBurst();
-  private now = 0;
 
   constructor(
     private readonly root: Container,
     private readonly hours: HourSource,
-    private readonly layout: Layout,
+    readonly layout: Layout,
+    assets: CharacterAssets,
+    snapshot?: CharacterSnapshot,
   ) {
     this.day = new DayScene(layout);
     this.night = new NightScene(layout);
@@ -72,13 +78,11 @@ export class HomeScene {
       speed: 11,
     });
 
-    const goat = createGoatPlaceholder();
-    this.character = new CharacterView({
-      idle: goat.idle,
-      blink: goat.blink,
+    this.character = new CharacterView(assets.pack, assets.items, {
       x: layout.centerX,
       y: layout.feetY,
     });
+    if (snapshot) this.character.restore(snapshot);
 
     this.ambient = new Sprite(Texture.WHITE);
     this.ambient.width = layout.width;
@@ -106,16 +110,20 @@ export class HomeScene {
     for (const child of this.root.removeChildren()) child.destroy({ children: true });
   }
 
+  /** Hop plus the goal-complete light burst. */
+  celebrate(): void {
+    this.character.celebrate();
+    this.burst.trigger(this.layout.centerX, this.layout.feetY - 32);
+  }
+
   /** Returns true if the tap landed on the character. */
   handleTap(x: number, y: number): boolean {
     if (!this.character.contains(x, y)) return false;
-    this.character.celebrate(this.now);
-    this.burst.trigger(this.layout.centerX, this.layout.feetY - 32);
+    this.celebrate();
     return true;
   }
 
   update(dt: number, t: number): void {
-    this.now = t;
     const light = this.timeOfDay.update(this.hours.get(), dt);
 
     this.night.back.alpha = light.night;
@@ -137,7 +145,7 @@ export class HomeScene {
     this.spill.update(t, lit);
     this.night.update(t, dt, this.lantern.level, this.fire.level);
 
-    this.character.update(t, lerpColor(0xffffff, WARM_TINT, light.night * 0.45));
+    this.character.update(t, dt, lerpColor(0xffffff, WARM_TINT, light.night * 0.45));
     this.burst.update(dt);
   }
 }

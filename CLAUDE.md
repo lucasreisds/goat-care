@@ -16,11 +16,11 @@
 |---|---|---|---|
 | 0 Plan (folders, Firestore, rules, character pack, rendering) | `main` | — | **Done** |
 | 1 Test scene: placeholder goat + day/night ambient light | `stage-1-test-scene` | 0.1.0 | **Done** (released) |
-| 2 Character pack, layers, expressions, animations | `stage-2-character` | 0.2.0 | Pending |
-| 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | Pending |
-| 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | Pending |
-| 5 Login, pairing, realtime ranking, caresses | `stage-5-online-ranking` | 0.5.0 | Pending |
-| 6 Notifications and PWA polish (official publish) | `stage-6-notifications-pwa` | 1.0.0 | Pending |
+| 2 Character pack, layers, expressions, animations | `stage-2-character` | 0.2.0 | **Done** (released) |
+| 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | **Done** (released) |
+| 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | **Done** (released) |
+| 5 Login, pairing, realtime ranking, caresses | `stage-5-online-ranking` | 0.5.0 | **Done** (released) |
+| 6 Notifications and PWA polish (official publish) | `stage-6-notifications-pwa` | 1.0.0 | **Done** (released as v1.0.0; push delivery still to be verified on a device) |
 
 Flow: stage branches start from `develop`, merge back into `develop`, release to `main` with tag `vX.Y.Z` and a `CHANGELOG.md` entry. Firebase Hosting is configured from stage 1 for **preview channels only** (see `docs/firebase-setup.md`); the official live deploy is stage 6.
 
@@ -35,6 +35,20 @@ Flow: stage branches start from `develop`, merge back into `develop`, release to
 7. **Verified email is required** (`request.auth.token.email_verified == true`) to write couple data and to create/use invites. Impact: (a) rules tests must build contexts with `{ email_verified: true }` plus a negative test with `false` for every couple write; (b) the app needs an "I verified my email" button that calls `user.reload()` and `getIdToken(true)`, otherwise the cached token stays unverified for up to 1 h; (c) on iOS the verification link opens in Safari, not in the installed PWA, so the user has to come back to the app manually; (d) the Auth emulator needs users flagged as verified for end-to-end tests.
 8. **Evolution is driven by altitude only** (`minAltitude` per stage). Achievement unlocks apply to new characters and items, not to stages.
 9. **No local-to-Firebase data migration.** Stages 1–4 use a throwaway local store; stage 5 starts clean. Only the offline sync queue survives as a mechanism.
+
+10. **Rewards (stage 3 defaults, easy to retune in `core/progression/rewards.ts`):** coins = 2 per base point and energy = 1 per base point (both follow the goal's own value and ignore the daily cap, so a capped day never feels wasted); altitude = 5 m per awarded point (so the cap also limits the climb); awarded points = round(base × (1 + streak bonus)) cut down to what is left of the daily cap. A goal can be completed at most once per day; goals created today start tomorrow. Streak = consecutive days with at least one completion, counted up to yesterday; days with nothing scheduled are neutral.
+11. **Weekly review** is offered on Mondays for the previous week, only if enabled and not yet handled; closing it in any way marks it handled and leaves every goal untouched.
+
+12. **Shop and wardrobe (stage 4):** the coin balance = coins earned − `inventory[*].paid`, never stored. Achievement items are owned automatically once the achievement is met (achievements are derived from state, in `core/progression/achievements.ts`); "first-week" = completions on 7 different days. What is worn lives in `wardrobe[characterId][slot]`, one item per slot, and is ignored if the item is no longer owned or compatible. Old saves without `inventory`/`wardrobe` load with empty defaults.
+
+13. **Online data layout (stage 5):** `users/{uid}` is private (`coupleId` plus a `state` map with profile, moods, weekly reviews, inventory, wardrobe, gifts sent and late completions). Everything shared lives under `couples/{coupleId}`: `members/{uid}` (the card the partner sees: names, total altitude, outfit, owned items), `goals/{goalId}`, `completions/{uid_goalId_dayKey}` (the id enforces one completion per goal per day), `days/{uid_dayKey}` and `weeks/{weekKey}/scores/{uid}` (counters that only move in the same batch as a new completion, each carrying `lastCompletionId` so the rules can cross-check with `getAfter()`), and `caresses/{id}`. A person belongs to at most one couple; leaving a couple is not supported yet.
+14. **A couple can start with one member.** Whoever creates it plays right away and invites the partner later from Menu > Dupla. Joining consumes the invite, adds the member and sets `users/{uid}.coupleId` in one batch.
+15. **Daily cap changes:** the couple stores `dailyCap`, `capNext { value, from }` and `capProposal { value, by }`. One member proposes, only the OTHER can accept, and accepting sets `capNext.from` to tomorrow (rules check it against `request.time`) while folding a change already in force into `dailyCap`. Range 5 to 50; a couple of one cannot change it.
+16. **Gifts:** a gift is a `caresses` document of kind `gift` whose `ref` is an item id. The sender pays the item's coin price (`giftsSent`, subtracted from the balance like a purchase); the receiver gets the item in the inventory with `paid: 0`. Coins stay client-side and are not validated by rules (they are personal, not competitive).
+17. **State source in stage 5:** the app composes `GameState` from Firestore listeners (persistent local cache) instead of `localStorage`. Only the completion sync queue is kept in `localStorage` (`goat-care/queue/{uid}`), because completions must be recalculated in a transaction at sync time (decision 4). The weekly ranking is derived live from the week's completions; `weeks/*/scores` is read for the history.
+18. **Local testing:** `npm run emulators` (Auth + Firestore, needs Java 21) with `npm run dev:emulators` (mode `emulator`, project `demo-goat-care`, reads `.env.emulator`), and `npm run test:rules` for the security rules. Rules are deployed with `firebase deploy --only firestore:rules`.
+
+19. **Notifications (stage 6):** push is Web Push via FCM, sent by a scheduled GitHub Actions job (`scripts/notify/send.ts`, every 5 min) because the Spark plan has no Cloud Functions; the job uses the Admin SDK with a service-account secret. Devices register in `users/{uid}/devices/{id}`. Goal reminders are sent once per goal per day (marker in `couples/{id}/reminders`), dropped if more than 3 h late; caresses are marked `pushedAt`. iOS only supports push for the installed Home Screen app (16.4+), needs a tap for permission and has no local scheduling. The official publish (`npm run deploy:live`) and the `v1.0.0` tag wait for the user's go-ahead.
 
 ---
 

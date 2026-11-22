@@ -14,16 +14,20 @@ npm test                 # unit tests (Vitest)
 npm run typecheck
 npm run build            # type-check + production build into dist/
 npm run icons            # regenerate placeholder PWA icons
+npm run generate:goat    # regenerate the placeholder goat pack + items (public/characters, public/items)
 npm run deploy:preview   # build + Firebase Hosting preview channel (see docs/firebase-setup.md)
+npm run deploy:live      # official publish: hosting + rules (stage 6, only when releasing)
+npm run notify:dry       # run the push sender locally in dry-run mode (needs FIREBASE_SERVICE_ACCOUNT)
 ```
 
 Useful URLs while developing: `/?debug` (time slider) and `/?hour=22` (pin the hour).
 
-## Project layout (stage 1)
+## Project layout
 
 ```
 src/core/        pure TypeScript (time, color, random) - no Pixi, no Firebase
-src/character/   generic character view + motion (placeholder goat art lives in placeholder/)
+src/character/   generic character engine: pack schema/loader, layered view, animation, springs
+public/characters/<id>/  a character pack (manifest.json + PNGs); public/items/ shared items
 src/render/      stage, day/night scenes, lighting, effects
 src/i18n/pt-BR/  ALL player-facing text
 docs/            setup guides

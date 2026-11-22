@@ -4,13 +4,22 @@ import { GROUND_BAND, type Layout } from '../layout';
 import { PixelBuffer } from '../pixel';
 import { createDotTexture, createSparkleTexture } from '../textures';
 
-const WIN_X = 22;
-const WIN_W = 56;
-const WIN_H = 78;
+const WIN_W = 48;
+const WIN_H = 62;
+/** Where the snowy field starts inside the glass; snowflakes stop here. */
+const FIELD_Y = WIN_H - 12;
 
 const WOOD_DARK = 0x2c1c26;
 const WOOD_MID = 0x4a3033;
 const WOOD_LIGHT = 0x7a5750;
+
+/** Floor to tie beam: about 2.5 characters tall, whatever the screen height. */
+const ROOM_H = 136;
+const BEAM_H = 8;
+const HEARTH_X = -6;
+const HEARTH_W = 46;
+const HEARTH_H = 44;
+const CHIMNEY_W = 28;
 
 function paintWall(L: Layout): Texture {
   const buf = new PixelBuffer(L.width, L.groundY);
@@ -25,14 +34,38 @@ function paintWall(L: Layout): Texture {
       buf.rect(x + 1 + Math.floor(rng() * (pw - 3)), Math.floor(rng() * L.groundY), 1, 2 + Math.floor(rng() * 4), 0x57393a);
     }
   }
-  // ceiling beam
-  buf.rect(0, 0, L.width, 10, WOOD_MID);
-  buf.rect(0, 0, L.width, 1, WOOD_LIGHT);
-  buf.rect(0, 10, L.width, 1, WOOD_DARK);
+  // gable above the tie beam: darker wall, roof underside outside the rafters, king post.
+  // Extra height on tall screens goes here, so the room itself never stretches.
+  const beamY = L.groundY - ROOM_H;
+  const apexY = 4;
+  const cx = L.centerX;
+  buf.rect(0, 0, L.width, beamY, 0x2a1a30, 0.4);
+  for (let y = 0; y < beamY; y++) {
+    const half = Math.round(((y - apexY) / (beamY - apexY)) * (L.width / 2 + 8));
+    for (const side of [-1, 1]) {
+      const edge = cx + side * half;
+      const out0 = side < 0 ? 0 : edge;
+      const outW = side < 0 ? edge : L.width - edge;
+      if (half < 0) continue;
+      if (outW > 0) buf.rect(out0, y, outW, 1, (y >> 2) % 2 === 0 ? 0x21151f : 0x1c121b);
+      const r0 = side < 0 ? edge : edge - 5;
+      buf.rect(r0, y, 6, 1, WOOD_MID);
+      buf.px(side < 0 ? edge + 5 : edge - 5, y, WOOD_DARK);
+      buf.px(side < 0 ? edge : edge, y, WOOD_LIGHT, 0.6);
+    }
+    if (half < 0) buf.rect(0, y, L.width, 1, 0x1c121b);
+  }
+  buf.rect(cx - 3, apexY + 6, 6, beamY - apexY - 6, WOOD_MID);
+  buf.rect(cx - 3, apexY + 6, 1, beamY - apexY - 6, WOOD_LIGHT, 0.6);
+  buf.rect(cx + 2, apexY + 6, 1, beamY - apexY - 6, WOOD_DARK);
+  // tie beam
+  buf.rect(0, beamY, L.width, BEAM_H, WOOD_MID);
+  buf.rect(0, beamY, L.width, 1, WOOD_LIGHT);
+  buf.rect(0, beamY + BEAM_H - 1, L.width, 1, WOOD_DARK);
   // soft shade under the beam, stepped
-  buf.rect(0, 11, L.width, 9, 0x2a1a30, 0.3);
-  buf.rect(0, 20, L.width, 9, 0x2a1a30, 0.2);
-  buf.rect(0, 29, L.width, 10, 0x2a1a30, 0.1);
+  buf.rect(0, beamY + BEAM_H, L.width, 8, 0x2a1a30, 0.3);
+  buf.rect(0, beamY + BEAM_H + 8, L.width, 8, 0x2a1a30, 0.2);
+  buf.rect(0, beamY + BEAM_H + 16, L.width, 8, 0x2a1a30, 0.1);
   // baseboard
   buf.rect(0, L.groundY - 6, L.width, 6, WOOD_MID);
   buf.rect(0, L.groundY - 6, L.width, 1, WOOD_LIGHT);
@@ -67,14 +100,14 @@ function paintWindowFrame(): Texture {
 }
 
 function paintSill(): Texture {
-  const buf = new PixelBuffer(72, 6);
-  buf.rect(0, 2, 72, 4, 0x5f423f);
-  buf.rect(0, 2, 72, 1, WOOD_LIGHT);
-  buf.rect(0, 5, 72, 1, WOOD_DARK);
+  const buf = new PixelBuffer(WIN_W + 16, 6);
+  buf.rect(0, 2, buf.width, 4, 0x5f423f);
+  buf.rect(0, 2, buf.width, 1, WOOD_LIGHT);
+  buf.rect(0, 5, buf.width, 1, WOOD_DARK);
   // snow piled on the sill
-  buf.rect(6, 1, 60, 1, 0xe8f0ff);
-  buf.rect(14, 0, 22, 1, 0xe8f0ff);
-  buf.rect(40, 0, 12, 1, 0xffffff);
+  buf.rect(6, 1, buf.width - 12, 1, 0xe8f0ff);
+  buf.rect(14, 0, 20, 1, 0xe8f0ff);
+  buf.rect(38, 0, 12, 1, 0xffffff);
   return buf.toTexture();
 }
 
@@ -93,11 +126,11 @@ function paintGlass(): Texture {
   });
   // faint static stars
   for (let i = 0; i < 16; i++) {
-    buf.px(Math.floor(rng() * WIN_W), Math.floor(rng() * 50), i % 3 === 0 ? 0xaec4ff : 0xdfe8ff, 0.7);
+    buf.px(Math.floor(rng() * WIN_W), Math.floor(rng() * (FIELD_Y - 14)), i % 3 === 0 ? 0xaec4ff : 0xdfe8ff, 0.7);
   }
   // moon
-  const mx = 38;
-  const my = 22;
+  const mx = WIN_W - 16;
+  const my = 18;
   buf.ellipse(mx, my, 13, 13, 0xffffff, 0.05);
   buf.ellipse(mx, my, 11, 11, 0xffffff, 0.08);
   buf.ellipse(mx, my, 8, 8, 0xf4eecb);
@@ -107,17 +140,17 @@ function paintGlass(): Texture {
   buf.ellipse(mx - 2, my - 2, 2, 1.5, 0xe0dbb2);
   buf.ellipse(mx + 2, my + 4, 1.5, 1, 0xe0dbb2);
   // snowy field and pine silhouettes
-  buf.rect(0, 66, WIN_W, 12, 0x2a3b78);
-  buf.rect(0, 66, WIN_W, 1, 0x8aa0d8);
-  for (const px of [6, 13, 44, 50, 31]) {
+  buf.rect(0, FIELD_Y, WIN_W, WIN_H - FIELD_Y, 0x2a3b78);
+  buf.rect(0, FIELD_Y, WIN_W, 1, 0x8aa0d8);
+  for (const px of [5, 11, 37, 43, 28]) {
     const ph = 9 + (px % 5);
     for (let r = 0; r < ph; r++) {
-      buf.rect(px - Math.floor(r / 3), 66 - ph + r, Math.floor(r / 3) * 2 + 1, 1, 0x0e1638);
+      buf.rect(px - Math.floor(r / 3), FIELD_Y - ph + r, Math.floor(r / 3) * 2 + 1, 1, 0x0e1638);
     }
   }
   // mullions (dark so they read against the lit glass)
-  buf.rect(27, 0, 2, WIN_H, 0x2f2030);
-  buf.rect(0, 38, WIN_W, 2, 0x2f2030);
+  buf.rect(WIN_W / 2 - 1, 0, 2, WIN_H, 0x2f2030);
+  buf.rect(0, WIN_H / 2 - 1, WIN_W, 2, 0x2f2030);
   return buf.toTexture();
 }
 
@@ -144,7 +177,7 @@ function paintLanternBulb(): Texture {
 
 function paintHearth(): Texture {
   const rng = createRng(31);
-  const buf = new PixelBuffer(46, 44);
+  const buf = new PixelBuffer(HEARTH_W, HEARTH_H);
   const stones = [0x6a6475, 0x5f5a6e, 0x746e80];
   for (let r = 0; r < 5; r++) {
     const y = 4 + r * 8;
@@ -166,6 +199,24 @@ function paintHearth(): Texture {
   buf.rect(12, 38, 22, 4, 0x4a2a22);
   buf.rect(14, 36, 18, 3, 0x5f3a2c);
   for (let x = 14; x < 32; x += 3) buf.px(x, 37, 0xff7a2f);
+  return buf.toTexture();
+}
+
+/** Stone chimney breast from the mantel up to the tie beam. */
+function paintChimney(height: number): Texture {
+  const rng = createRng(53);
+  const buf = new PixelBuffer(CHIMNEY_W, height);
+  const stones = [0x6a6475, 0x5f5a6e, 0x746e80];
+  buf.rect(0, 0, CHIMNEY_W, height, 0x3a3750);
+  for (let r = 0; r * 8 < height; r++) {
+    const y = height - (r + 1) * 8;
+    for (let x = r % 2 === 0 ? 0 : -6; x < CHIMNEY_W; x += 14) {
+      buf.rect(x, y, 13, 7, stones[Math.floor(rng() * 3)]!);
+      buf.px(x + 1, y + 1, 0x9a94a8);
+    }
+  }
+  buf.rect(CHIMNEY_W - 1, 0, 1, height, 0x3a3750);
+  buf.rect(0, 0, 1, height, 0x3a3750);
   return buf.toTexture();
 }
 
@@ -231,19 +282,19 @@ function paintRug(): Texture {
 }
 
 function paintMoonPatch(): Texture {
-  const buf = new PixelBuffer(96, 46);
+  const buf = new PixelBuffer(88, 46);
   buf.ctx.fillStyle = '#ffffff';
   buf.ctx.beginPath();
   buf.ctx.moveTo(10, 0);
-  buf.ctx.lineTo(68, 0);
-  buf.ctx.lineTo(96, 46);
+  buf.ctx.lineTo(60, 0);
+  buf.ctx.lineTo(88, 46);
   buf.ctx.lineTo(34, 46);
   buf.ctx.closePath();
   buf.ctx.fill();
   // mullion shadows inside the patch
   buf.ctx.globalCompositeOperation = 'destination-out';
-  buf.rect(36, 0, 3, 46, 0xffffff, 0.8);
-  buf.rect(0, 20, 96, 3, 0xffffff, 0.8);
+  buf.rect(33, 0, 3, 46, 0xffffff, 0.8);
+  buf.rect(0, 20, 88, 3, 0xffffff, 0.8);
   buf.ctx.globalCompositeOperation = 'source-over';
   return buf.toTexture();
 }
@@ -260,6 +311,7 @@ export class NightScene {
   private readonly flames: Texture[];
   private readonly flameSprite: Sprite;
   private readonly bulb: Sprite;
+  private readonly winX: number;
   private readonly winY: number;
 
   /** Light anchors: the light layer places its point lights on these. */
@@ -269,11 +321,15 @@ export class NightScene {
   constructor(layout: Layout) {
     const L = layout;
     const rng = createRng(5);
-    // the window and lantern keep their proportions on taller walls
-    const winY = Math.round(L.groundY * 0.2);
+    // Everything hangs off the floor line and the tie beam, so the room keeps its proportions
+    // on any screen: hearth and chimney on the left, window above the character, hay on the right.
+    const beamY = L.groundY - ROOM_H;
+    const winX = L.centerX - WIN_W / 2 + 4;
+    const winY = beamY + BEAM_H + 14;
+    this.winX = winX;
     this.winY = winY;
-    this.lanternPos = { x: L.width - 42, y: Math.round(L.groundY * 0.34) };
-    this.firePos = { x: 31, y: L.groundY - 18 };
+    this.lanternPos = { x: L.width - 14, y: beamY + BEAM_H + 34 };
+    this.firePos = { x: HEARTH_X + HEARTH_W / 2, y: L.groundY - 18 };
     const lantern = this.lanternPos;
     const fire = this.firePos;
 
@@ -286,33 +342,36 @@ export class NightScene {
 
     add(this.back, paintWall(L), 0, 0);
     add(this.back, paintFloor(L), 0, L.groundY);
-    add(this.back, paintWindowFrame(), WIN_X - 4, winY - 4);
-    add(this.back, paintSill(), WIN_X - 8, winY + WIN_H + 2);
-    add(this.back, paintHearth(), 8, L.groundY - 42);
-    add(this.back, paintHay(), L.width - 54, L.groundY - 24);
+    const chimneyH = ROOM_H - BEAM_H - HEARTH_H + 2;
+    add(this.back, paintChimney(chimneyH), HEARTH_X + (HEARTH_W - CHIMNEY_W) / 2, beamY + BEAM_H);
+    add(this.back, paintWindowFrame(), winX - 4, winY - 4);
+    add(this.back, paintSill(), winX - 8, winY + WIN_H + 2);
+    add(this.back, paintHearth(), HEARTH_X, L.groundY - HEARTH_H + 2);
+    add(this.back, paintHay(), L.width - 44, L.groundY - 24);
     add(this.back, paintRug(), L.centerX - 38, L.groundY + 4);
-    // lantern rope + body
-    const ropeLength = lantern.y - 20;
+    // lantern rope (from the tie beam) + body
+    const ropeTop = beamY + BEAM_H;
+    const ropeLength = lantern.y - 10 - ropeTop;
     const rope = new PixelBuffer(1, ropeLength);
     rope.rect(0, 0, 1, ropeLength, 0x2a1c26);
-    add(this.back, rope.toTexture(), lantern.x, 10);
+    add(this.back, rope.toTexture(), lantern.x, ropeTop);
     add(this.back, paintLanternBody(), lantern.x - 7, lantern.y - 10);
 
     // --- emissive layer ---
-    const moonPatch = add(this.emissive, paintMoonPatch(), 12, L.groundY);
+    const moonPatch = add(this.emissive, paintMoonPatch(), winX - 12, L.groundY);
     moonPatch.tint = 0x9fb4ff;
     moonPatch.alpha = 0.1;
     moonPatch.blendMode = 'add';
 
-    add(this.emissive, paintGlass(), WIN_X, winY);
+    add(this.emissive, paintGlass(), winX, winY);
 
     const sparkle = createSparkleTexture();
     for (let i = 0; i < 6; i++) {
       const sprite = add(
         this.emissive,
         sparkle,
-        WIN_X + 4 + Math.floor(rng() * (WIN_W - 8)),
-        winY + 3 + Math.floor(rng() * 46),
+        winX + 4 + Math.floor(rng() * (WIN_W - 8)),
+        winY + 3 + Math.floor(rng() * (FIELD_Y - 20)),
       );
       sprite.tint = 0xdfe8ff;
       this.stars.push({ sprite, phase: rng() * Math.PI * 2, speed: 1 + rng() * 2 });
@@ -331,7 +390,7 @@ export class NightScene {
         sway: 2 + rng() * 3,
         phase: rng() * Math.PI * 2,
         x: rng() * WIN_W,
-        y: rng() * 66,
+        y: rng() * FIELD_Y,
       });
     }
 
@@ -347,13 +406,13 @@ export class NightScene {
     }
     for (const flake of this.flakes) {
       flake.y += flake.speed * dt;
-      if (flake.y > 66) {
+      if (flake.y > FIELD_Y) {
         flake.y = 0;
         flake.x = Math.random() * WIN_W;
       }
       const x = flake.x + Math.sin(t * 0.8 + flake.phase) * flake.sway;
       flake.sprite.position.set(
-        WIN_X + Math.max(0, Math.min(WIN_W - 2, Math.round(x))),
+        this.winX + Math.max(0, Math.min(WIN_W - 2, Math.round(x))),
         this.winY + Math.round(flake.y),
       );
     }
