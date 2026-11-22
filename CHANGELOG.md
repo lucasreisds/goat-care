@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- The notification job installs with Node 24 (npm 11), the same npm that wrote `package-lock.json`; with Node 22 `npm ci`
-  failed on a lockfile mismatch.
+- `npm ci` failed on Linux (the notification job) because the lockfile lacked `@emnapi/core` and `@emnapi/runtime`,
+  which a platform-specific WASM binding needs; both are now pinned as dev dependencies. The job also runs on Node 24.
 
 ## [1.0.0] - 2026-11-22
 
