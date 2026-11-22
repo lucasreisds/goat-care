@@ -16,11 +16,11 @@
 |---|---|---|---|
 | 0 Plan (folders, Firestore, rules, character pack, rendering) | `main` | — | **Done** |
 | 1 Test scene: placeholder goat + day/night ambient light | `stage-1-test-scene` | 0.1.0 | **Done** (released) |
-| 2 Character pack, layers, expressions, animations | `stage-2-character` | 0.2.0 | Implemented, awaiting iPhone test |
-| 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | Implemented, awaiting iPhone test |
-| 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | Implemented, awaiting iPhone test |
-| 5 Login, pairing, realtime ranking, caresses | `stage-5-online-ranking` | 0.5.0 | Implemented, awaiting iPhone test |
-| 6 Notifications and PWA polish (official publish) | `stage-6-notifications-pwa` | 1.0.0 | Implemented, awaiting iPhone test; official publish and `v1.0.0` only after approval |
+| 2 Character pack, layers, expressions, animations | `stage-2-character` | 0.2.0 | **Done** (released) |
+| 3 Recurring goals, weekly review, rewards, altitude (no backend) | `stage-3-goals` | 0.3.0 | **Done** (released) |
+| 4 Evolution, shop, wardrobe | `stage-4-shop-wardrobe` | 0.4.0 | **Done** (released) |
+| 5 Login, pairing, realtime ranking, caresses | `stage-5-online-ranking` | 0.5.0 | **Done** (released) |
+| 6 Notifications and PWA polish (official publish) | `stage-6-notifications-pwa` | 1.0.0 | **Done** (released as v1.0.0; push delivery still to be verified on a device) |
 
 Flow: stage branches start from `develop`, merge back into `develop`, release to `main` with tag `vX.Y.Z` and a `CHANGELOG.md` entry. Firebase Hosting is configured from stage 1 for **preview channels only** (see `docs/firebase-setup.md`); the official live deploy is stage 6.
 
