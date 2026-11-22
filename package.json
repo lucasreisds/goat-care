@@ -23,6 +23,8 @@
     "pixi.js": "^8.23.0"
   },
   "devDependencies": {
+    "@emnapi/core": "^2.0.0-beta.2",
+    "@emnapi/runtime": "^2.0.0-beta.2",
     "@firebase/rules-unit-testing": "^6.0.0",
     "@types/node": "^24.19.2",
     "firebase-admin": "^14.5.1",
