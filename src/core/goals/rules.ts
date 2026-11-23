@@ -84,8 +84,8 @@ export function createGoal(input: GoalInput, now: Date, timeZone: string, id: st
     difficulty: input.difficulty,
     recurrence: input.recurrence,
     status: 'active',
-    // new goals start the day after they are created
-    effectiveFrom: addDays(today, 1),
+    // new goals count from the day they are created
+    effectiveFrom: today,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   };
