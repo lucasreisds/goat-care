@@ -251,6 +251,7 @@ button:disabled {
   font-size: 18px;
 }
 .modal-body {
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -655,6 +656,8 @@ button:disabled {
   height: 380px;
   border-radius: 14px;
   overflow: hidden;
+  /* never let the flex column of the modal squash the mountain (it has overflow:hidden, so it could shrink to 0) */
+  flex: none;
   background: linear-gradient(to bottom, #3f6fc4 0%, #8cc0ec 55%, #e2efe6 100%);
 }
 .climb-mountain {
