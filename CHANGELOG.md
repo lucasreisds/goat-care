@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-23
+
 ### Changed
 - New goals now count from the day they are created, instead of only from the next day (so they can be
   completed right away). Edits, pauses and archiving still apply from tomorrow.
@@ -143,7 +145,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Keep a Changelog, SemVer).
 - Changelog following Keep a Changelog.
 
-[Unreleased]: https://github.com/lucasreisds/goat-care/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/lucasreisds/goat-care/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/lucasreisds/goat-care/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/lucasreisds/goat-care/compare/v0.5.0...v1.0.0
 [0.5.0]: https://github.com/lucasreisds/goat-care/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/lucasreisds/goat-care/compare/v0.3.0...v0.4.0
