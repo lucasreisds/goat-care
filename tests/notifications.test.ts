@@ -51,7 +51,7 @@ describe('reminder candidates', () => {
   });
 
   it('skip a goal that has not started yet', () => {
-    const later = createGoal(goalInput({ reminderTime: '08:00' }), at(DAY), TZ, 'new'); // starts tomorrow
+    const later = createGoal(goalInput({ reminderTime: '08:00' }), at('2026-11-19'), TZ, 'new'); // starts tomorrow
     expect(reminderCandidates([later], DAY, 9 * 60)).toEqual([]);
   });
 });

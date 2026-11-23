@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- New goals now count from the day they are created, instead of only from the next day (so they can be
+  completed right away). Edits, pauses and archiving still apply from tomorrow.
+
 ### Fixed
+- Ranking screen: the mountain and the two characters were squashed out of view by the partner's goal list
+  (only the goals were visible); the mountain now keeps its full height and the modal scrolls.
 - `npm ci` failed on Linux (the notification job) because the lockfile lacked `@emnapi/core` and `@emnapi/runtime`,
   which a platform-specific WASM binding needs; both are now pinned as dev dependencies. The job also runs on Node 24.
 
