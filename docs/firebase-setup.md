@@ -93,7 +93,7 @@ the name screen.
    (also under Menu > Dupla); it is valid for 30 minutes and works once.
 4. On the second phone: create the other account, verify it, and type the code under
    **"Tenho um código de convite"**.
-5. Create goals on both phones (they start the next day), complete them and watch the
+5. Create goals on both phones (they count from today), complete them and watch the
    **ranking** (the trophy bar at the top) move on the other phone. Send a **carinho** with the
    envelope button. To test offline, turn on Airplane Mode, complete a goal, then reconnect.
 6. The daily cap is under Menu > Dupla: one phone proposes, the other accepts, and it applies the
