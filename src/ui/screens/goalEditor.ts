@@ -90,7 +90,7 @@ export function openGoalEditor(ctx: AppContext, goalId?: string): void {
       return;
     }
     ctx.commit(result.state);
-    ctx.toast(strings.ui.toast.startsTomorrow);
+    ctx.toast(existing ? strings.ui.toast.startsTomorrow : strings.ui.toast.goalAdded);
     modal.close();
   };
 

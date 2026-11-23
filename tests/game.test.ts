@@ -30,11 +30,11 @@ function ok<T extends { ok: boolean }>(r: T): Extract<T, { ok: true }> {
 }
 
 describe('completing goals', () => {
-  it('a goal created today cannot be completed today (it starts tomorrow)', () => {
+  it('a goal created today can be completed today', () => {
     const state = stateWith('2026-11-16', [goalInput()]);
-    expect(completeGoal(state, state.goals[0]!.id, at('2026-11-16'))).toMatchObject({ ok: false, reason: 'not-due' });
-    expect(agenda(state, at('2026-11-16'))).toHaveLength(0);
-    expect(agenda(state, at('2026-11-17'))).toHaveLength(1);
+    expect(agenda(state, at('2026-11-15'))).toHaveLength(0);
+    expect(agenda(state, at('2026-11-16'))).toHaveLength(1);
+    expect(completeGoal(state, state.goals[0]!.id, at('2026-11-16'))).toMatchObject({ ok: true });
   });
 
   it('awards points, coins, energy and altitude', () => {

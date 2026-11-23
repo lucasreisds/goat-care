@@ -46,10 +46,11 @@ describe('validateGoalInput', () => {
 describe('when changes take effect (from the next day)', () => {
   const created = at('2026-11-16'); // Monday
 
-  it('a new goal starts the day after it is created', () => {
+  it('a new goal starts the same day it is created', () => {
     const goal = createGoal(goalInput(), created, TZ, 'g1');
-    expect(goal.effectiveFrom).toBe('2026-11-17');
-    expect(isActiveOn(goal, '2026-11-16')).toBe(false);
+    expect(goal.effectiveFrom).toBe('2026-11-16');
+    expect(isActiveOn(goal, '2026-11-15')).toBe(false);
+    expect(isActiveOn(goal, '2026-11-16')).toBe(true);
     expect(isActiveOn(goal, '2026-11-17')).toBe(true);
   });
 
